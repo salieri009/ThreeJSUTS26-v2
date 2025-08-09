@@ -5,11 +5,34 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Animal Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles/main.css" />
 </head>
 <body>
+<header class="app-header">
+  <div class="brand" style="display:flex;align-items:center;gap:10px;">
+    <span class="logo-dot"></span>
+    <div class="header-title">Animal Simulator</div>
+  </div>
+  <div class="header-actions">
+    <button id="themeToggle" class="header-btn" data-category="btn-theme-change" title="Toggle Theme">Theme</button>
+  </div>
+  
+</header>
 
-<main id="scene-container" class="scene">
+<div class="app-shell">
+  <aside class="sidebar" role="complementary" aria-label="Left sidebar">
+    <div class="scene-overlay-controls" role="navigation" aria-label="Category navigation">
+        <button class="overlay-btn" data-category="props" aria-label="Open decor category">🎁 Decor</button>
+        <button class="overlay-btn" data-category="nature" aria-label="Open flora category">🌿 Flora</button>
+        <button class="overlay-btn" data-category="animals" aria-label="Open fauna category">🐾 Fauna</button>
+        <button class="overlay-btn" data-category="buildings" aria-label="Open build category">🏗️ Build</button>
+    </div>
+  </aside>
+
+  <main id="scene-container" class="scene">
 
 
 <!--    <div class="season-dial">-->
@@ -31,159 +54,35 @@
 
 
 
-    <div class="scene-overlay-wind-controls">
-        <label>Wind Strength: <input type="range" min="0" max="3" step="0.01" value="1" id="windStrengthSlider"></label>
-        <span id="windStrengthValue">1.0</span>
-        <label>Wind Turbulence: <input type="range" min="0" max="2" step="0.01" value="0.5" id="windTurbulenceSlider"></label>
-        <span id="windTurbulenceValue">0.5</span>
-        <label>WindDirection (x, z):
-            <input type="number" step="0.1" value="1" id="windDirX">
-            <input type="number" step="0.1" value="0" id="windDirZ">
-        </label>
-    </div>
+    
 
 
-    <div class="scene-overlay-night-and-days">
-        <button class="overlay-btn" data-category="btn-night">Night Mode</button>
-        <!--        <button class="overlay-btn" data-category="btn-day">Day Mode</button>-->
-    </div>
+    
 
-    <div class="scene-overlay-season-controls">
-        <button class="overlay-btn" data-category="spring">🌸 Spring</button>
-        <button class="overlay-btn" data-category="summer">☀️ Summer</button>
-        <button class="overlay-btn" data-category="autumn">🍂 Autumn</button>
-        <button class="overlay-btn" data-category="winter">❄🎿 Winter</button>
-    </div>
+    
 
-    <div class="scene-overlay-weather-controls">
-        <button class="overlay-btn" data-category="sunny">☀️ sunny</button>
-        <button class="overlay-btn" data-category="cloudy">☁️ cloudy</button>
-        <button class="overlay-btn" data-category="rainy">🌧️ rainy</button>
-        <button class="overlay-btn" data-category="snowy">❄️ </button>
-        <button class="overlay-btn" data-category="stormy">⛈️ </button>
-    </div>
-
-
-    <div class="scene-overlay-add-and-remove">
-        <button class="overlay-btn" data-category="remove">x</button>
-        <button class="overlay-btn" data-category="terrain expansion">+</button>
-    </div>
-    <!-- 오버레이 버튼 -->
-    <div class="scene-overlay-controls">
-        <button class="overlay-btn" data-category="props">Props</button>
-        <button class="overlay-btn" data-category="nature">Nature</button>
-        <button class="overlay-btn" data-category="animals">Animals</button>
-        <button class="overlay-btn" data-category="buildings">Bldg</button>
-    </div>
+    
     
     <!--    예시입니다-->
     <!-- 핫바 스타일 아이템 패널 -->
-    <div class="overlay-item-panel" id="item-panel">
-        <div class="overlay-item-panel-header">카테고리 미리보기</div>
-        <!-- Props 카테고리 -->
-        <div class="item-list" data-category="props" style="display: none;">
-            <div class="draggable-item"><span class="item-icon"></span><span>Hay</span></div>
-            <div class="draggable-item"><span class="item-icon"></span><span>Carrot</span></div>
-            <div class="draggable-item"><span class="item-icon"></span><span>Potato</span></div>
-            <div class="draggable-item"><span class="item-icon"></span><span>Tomato</span></div>
-            <div class="draggable-item"><span class="item-icon"></span><span>Wheat</span></div>
-            <div class="draggable-item"><span class="item-icon"></span><span>Path</span></div>
-        </div>
-        <!-- Nature 카테고리 -->
-        <div class="item-list" data-category="nature" style="display: none;">
-            <div class="draggable-item"><span class="item-icon"></span><span>Rock(L)</span></div>
-            <div class="draggable-item"><span class="item-icon"></span><span>Rock(S)</span></div>
-            <div class="draggable-item"><span class="item-icon"></span><span>Tree</span></div>
-            <div class="draggable-item"><span class="item-icon"></span><span>Pine Tree</span></div>
-        </div>
-        <!-- Animals 카테고리 -->
-        <div class="item-list" data-category="animals" style="display: none;">
-            <div class="draggable-item"><span class="item-icon"></span><span>Cow</span></div>
-            <div class="draggable-item"><span class="item-icon"></span><span>Pig</span></div>
-            <div class="draggable-item"><span class="item-icon"></span><span>Sheep</span></div>
-            <div class="draggable-item"><span class="item-icon"></span><span>Hen</span></div>
-        </div>
-        <!-- Buildings 카테고리 -->
-        <div class="item-list" data-category="buildings" style="display: none;">
-            <div class="draggable-item"><span class="item-icon"></span><span>Fence</span></div>
-            <div class="draggable-item"><span class="item-icon"></span><span>Barn</span></div>
-            <div class="draggable-item"><span class="item-icon"></span><span>Windmill</span></div>
-        </div>
-    </div>
+    
 
 <!--    지금 상황을 나타내는 메시지 -->
 
     <div id="status-message" class="status-message">
     </div>
 
-
-    <!-- index.html 추가 -->
-    <div id="weather-event-panel" class="weather-event-panel">
-        <div class="weather-event-header">
-            <span>예정된 날씨 이벤트</span>
-            <button id="close-weather-event-panel" title="닫기">×</button>
-        </div>
-        <div id="weather-event-list" class="weather-event-list">
-            <!-- JS로 이벤트 카드가 들어갑니다 -->
-        </div>
+    <!-- Center overlay actions: expand/remove -->
+    <div class="scene-overlay-center-actions" role="group" aria-label="Center actions">
+        <button class="overlay-btn" data-category="terrain expansion" aria-label="Expand terrain" title="Expand">+</button>
+        <button class="overlay-btn" data-category="remove" aria-label="Remove selected object" title="Remove">×</button>
     </div>
 
 
-    <div class="scene-overlay-weather-container">
-        <div class="ruler-container">
-            <div class="season-marks">
-                <div class="season-mark season-spring">
-                    <div class="season-mark-line"></div>
-                    <span class="season-label">Spring</span>
-                </div>
-                <div class="season-mark season-summer">
-                    <div class="season-mark-line"></div>
-                    <span class="season-label">Summer</span>
-                </div>
-                <div class="season-mark season-fall">
-                    <div class="season-mark-line"></div>
-                    <span class="season-label">Fall</span>
-                </div>
-                <div class="season-mark season-winter">
-                    <div class="season-mark-line"></div>
-                    <span class="season-label">Winter</span>
-                </div>
-            </div>
-        </div>
+    
 
-        <div class="clock">
-            <div id="time" class="time">Time</div>
-            <div id="date" class="date">Date</div>
-        </div>
 
-        <div class="weather-display">
-            <div class="weather-info">
-                <div id="location">Seoul</div>
-                <div id="temperature">24°C</div>
-                <div id="condition">Sunny</div>
-            </div>
-            <div class="weather-details">
-                <div class="detail">
-                    <span>Humidity</span>
-                    <span id="humidity">65%</span>
-                </div>
-                <div class="detail">
-                    <span>Wind</span>
-                    <span id="wind">12 km/h</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="forecast-section">
-            <div class="forecast-container" id="forecast">
-                <!-- Forecast items will be added here by JavaScript -->
-            </div>
-            <div class="today-marker"></div>
-            <div class="time-ruler" id="timeRuler">
-                <!-- Time marks will be added here by JavaScript -->
-            </div>
-        </div>
-    </div>
+    
 
 <!--    이하는 더미 데이터 -->
     <!--
@@ -249,22 +148,90 @@
 
 
 
-</main>
+  </main>
+
+  <section class="controls-dock" role="complementary" aria-label="Right control panel">
+      <div class="scene-overlay-season-controls" role="group" aria-label="Season controls">
+          <button class="overlay-btn" data-category="spring" aria-label="Switch to spring season">🌸 Spring</button>
+          <button class="overlay-btn" data-category="summer" aria-label="Switch to summer season">☀️ Summer</button>
+          <button class="overlay-btn" data-category="autumn" aria-label="Switch to autumn season">🍂 Autumn</button>
+          <button class="overlay-btn" data-category="winter" aria-label="Switch to winter season">❄🎿 Winter</button>
+      </div>
+      <div class="scene-overlay-weather-controls" role="group" aria-label="Weather controls">
+          <button class="overlay-btn" data-category="sunny" aria-label="Set weather to sunny">☀️ sunny</button>
+          <button class="overlay-btn" data-category="cloudy" aria-label="Set weather to cloudy">☁️ cloudy</button>
+          <button class="overlay-btn" data-category="rainy" aria-label="Set weather to rainy">🌧️ rainy</button>
+          <button class="overlay-btn" data-category="snowy" aria-label="Set weather to snowy">❄️</button>
+          <button class="overlay-btn" data-category="stormy" aria-label="Set weather to stormy">⛈️</button>
+      </div>
+      <div class="scene-overlay-night-and-days" role="group" aria-label="Time of day">
+          <button class="overlay-btn" data-category="btn-night" aria-label="Enable night mode">Night Mode</button>
+      </div>
+      <div class="scene-overlay-wind-controls" role="group" aria-label="Wind controls">
+          <label>Wind Strength: <input type="range" min="0" max="3" step="0.01" value="1" id="windStrengthSlider"></label>
+          <span id="windStrengthValue">1.0</span>
+          <label>Wind Turbulence: <input type="range" min="0" max="2" step="0.01" value="0.5" id="windTurbulenceSlider"></label>
+          <span id="windTurbulenceValue">0.5</span>
+          <label>WindDirection (x, z):
+              <input type="number" step="0.1" value="1" id="windDirX">
+              <input type="number" step="0.1" value="0" id="windDirZ">
+          </label>
+      </div>
+      
+      <div class="overlay-item-panel" id="item-panel">
+          <div class="overlay-item-panel-header">카테고리 미리보기</div>
+          <div class="item-list" data-category="props" style="display: none;">
+              <div class="draggable-item"><span class="item-icon"></span><span>Hay</span></div>
+              <div class="draggable-item"><span class="item-icon"></span><span>Carrot</span></div>
+              <div class="draggable-item"><span class="item-icon"></span><span>Potato</span></div>
+              <div class="draggable-item"><span class="item-icon"></span><span>Tomato</span></div>
+              <div class="draggable-item"><span class="item-icon"></span><span>Wheat</span></div>
+              <div class="draggable-item"><span class="item-icon"></span><span>Path</span></div>
+          </div>
+          <div class="item-list" data-category="nature" style="display: none;">
+              <div class="draggable-item"><span class="item-icon"></span><span>Rock(L)</span></div>
+              <div class="draggable-item"><span class="item-icon"></span><span>Rock(S)</span></div>
+              <div class="draggable-item"><span class="item-icon"></span><span>Tree</span></div>
+              <div class="draggable-item"><span class="item-icon"></span><span>Pine Tree</span></div>
+          </div>
+          <div class="item-list" data-category="animals" style="display: none;">
+              <div class="draggable-item"><span class="item-icon"></span><span>Cow</span></div>
+              <div class="draggable-item"><span class="item-icon"></span><span>Pig</span></div>
+              <div class="draggable-item"><span class="item-icon"></span><span>Sheep</span></div>
+              <div class="draggable-item"><span class="item-icon"></span><span>Hen</span></div>
+          </div>
+          <div class="item-list" data-category="buildings" style="display: none;">
+              <div class="draggable-item"><span class="item-icon"></span><span>Fence</span></div>
+              <div class="draggable-item"><span class="item-icon"></span><span>Barn</span></div>
+              <div class="draggable-item"><span class="item-icon"></span><span>Windmill</span></div>
+          </div>
+      </div>
+  </section>
+
+</div>
 <script type="importmap">
     {
       "imports": {
-        "three": "./build/three.module.js"
+        "three": "https://unpkg.com/three@0.160.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.1/examples/jsm/"
       }
     }
 </script>
-<script src="/Projects/main.js" type="module"></script>
+<script src="scripts/main.js" type="module"></script>
+<script>
+  (function(){
+    const root = document.documentElement;
+    const key = 'app-theme';
+    const saved = localStorage.getItem(key);
+    if (saved === 'dark') root.setAttribute('data-theme','dark');
+    document.getElementById('themeToggle')?.addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      if (next === 'dark') root.setAttribute('data-theme','dark'); else root.removeAttribute('data-theme');
+      localStorage.setItem(key, next);
+    });
+  })();
+</script>
 </body>
-
-
-<!--하단 footer-->
-<footer class="app-footer">
-
-
-</footer>
+<footer class="app-footer"></footer>
 
 </html>

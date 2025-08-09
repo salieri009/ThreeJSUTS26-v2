@@ -53,7 +53,14 @@ let currentDate = new Date();
 let currentSeason = null;
 
 // 위치 정보 가져오기 (성공시 getWeather 호출)
-navigator.geolocation.getCurrentPosition(success, fail);
+// 브라우저 지원 확인 후 실행
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(success, fail);
+} else {
+    console.warn('Geolocation이 지원되지 않는 브라우저입니다.');
+    // 기본 날씨 데이터로 폴백
+    setRandomWeatherUI();
+}
 
 //현재 위치 가져오기
 function success(position) {
@@ -144,7 +151,10 @@ function syncWeatherToScene(weatherMain) {
             env.setWeather('foggy');
             break;
         default:
-            env.setWeather('sunny');
+            // If undefined at boot, delay once after scene is ready
+            try { env.setWeather('sunny'); } catch(e) {
+                setTimeout(()=> env.setWeather('sunny'), 100);
+            }
     }
 }
 

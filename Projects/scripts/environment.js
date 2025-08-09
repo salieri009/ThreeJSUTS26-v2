@@ -1,6 +1,19 @@
-import * as THREE from '../build/three.module.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { scene, renderer } from './sceneManager.js';
-import { loader, grass, grasses } from './gridModels.js';
+import { grass, grasses } from './gridModels.js';
+
+// Local GLTF loader fallback (decouples from gridModels' internal loader)
+const localGLTFLoader = new GLTFLoader();
+function getGLTFLoader() {
+    try {
+        // optional import from gridModels if present at runtime
+        // eslint-disable-next-line no-undef
+        return (typeof loader !== 'undefined' && loader) ? loader : localGLTFLoader;
+    } catch (_) {
+        return localGLTFLoader;
+    }
+}
 
 
 /**
@@ -64,7 +77,7 @@ let auroraMesh = null;
 let stormLight = null;
 let clouds = [];
 let cloudMaterials = [];
-let clock = new THREE.Clock();
+export let clock = new THREE.Clock();
 let lightningTimer = 0;
 let lightningLines = [];
 let windParticles = null;
@@ -311,34 +324,69 @@ export function loadClouds(level = 1) {
 
     cloudRange = getCloudSpawnRange(level);
 
-    loader.load("models/cloud/scene.gltf", (gltf) => {
-        for (let i = 0; i < cloudCount; i++) {
-            let cloud = gltf.scene.clone();
-            let randomScale = Math.random() * 0.15 + 0.1;
-            cloud.scale.set(randomScale, randomScale, randomScale);
-            cloud.position.set(
-                Math.random() * cloudRange.x - cloudRange.x / 2,
-                Math.random() * cloudRange.y + 10,
-                Math.random() * cloudRange.z - cloudRange.z / 2
-            );
+    const gltfLoader = getGLTFLoader();
+    gltfLoader.load(
+        "models/cloud/scene.gltf",
+        (gltf) => {
+            for (let i = 0; i < cloudCount; i++) {
+                let cloud = gltf.scene.clone();
+                let randomScale = Math.random() * 0.15 + 0.1;
+                cloud.scale.set(randomScale, randomScale, randomScale);
+                cloud.position.set(
+                    Math.random() * cloudRange.x - cloudRange.x / 2,
+                    Math.random() * cloudRange.y + 10,
+                    Math.random() * cloudRange.z - cloudRange.z / 2
+                );
 
-            cloud.userData = {
-                speed: Math.random() * 1 + 1.4,
-                baseY: cloud.position.y,
-                opacitySeed: Math.random() * 100
-            };
-            cloud.traverse((node) => {
-                if (node.isMesh && node.material && node.material.color) {
-                    node.material = node.material.clone();
-                    node.material.color.setHex(cloudColor);
-                    node.material.transparent = true;
-                }
-            });
-            clouds.push(cloud);
-            scene.add(cloud);
+                cloud.userData = {
+                    speed: Math.random() * 1 + 1.4,
+                    baseY: cloud.position.y,
+                    opacitySeed: Math.random() * 100
+                };
+                cloud.traverse((node) => {
+                    if (node.isMesh && node.material && node.material.color) {
+                        node.material = node.material.clone();
+                        node.material.color.setHex(cloudColor);
+                        node.material.transparent = true;
+                    }
+                });
+                clouds.push(cloud);
+                scene.add(cloud);
+            }
+            updateSky();
+        },
+        undefined,
+        () => {
+            // Fallback: primitive billboard clouds if GLTF missing
+            for (let i = 0; i < cloudCount; i++) {
+                const geo = new THREE.PlaneGeometry(8, 4, 1, 1);
+                const mat = new THREE.MeshBasicMaterial({
+                    color: cloudColor,
+                    transparent: true,
+                    opacity: 0.6,
+                    depthWrite: false,
+                    side: THREE.DoubleSide
+                });
+                const cloud = new THREE.Mesh(geo, mat);
+                const randomScale = Math.random() * 0.6 + 0.6;
+                cloud.scale.set(randomScale, randomScale, randomScale);
+                cloud.position.set(
+                    Math.random() * cloudRange.x - cloudRange.x / 2,
+                    Math.random() * cloudRange.y + 10,
+                    Math.random() * cloudRange.z - cloudRange.z / 2
+                );
+                cloud.rotation.x = -Math.PI / 8;
+                cloud.userData = {
+                    speed: Math.random() * 1 + 1.2,
+                    baseY: cloud.position.y,
+                    opacitySeed: Math.random() * 100
+                };
+                clouds.push(cloud);
+                scene.add(cloud);
+            }
+            updateSky();
         }
-        updateSky();
-    });
+    );
 }
 
 /**
@@ -610,7 +658,7 @@ function rotateVector(vec, axis, theta) {
         .add(axis.clone().multiplyScalar(axis.dot(vec) * (1 - cos)));
 }
 
-export function updateMoon(deltaTime) {
+export function updateMoon(deltaTime = 1/60) {
     if (!Supermoon || auroraMesh) return;
     moonOrbitAngle += deltaTime * 5;
 
@@ -1869,15 +1917,15 @@ export function updateFog() {
 
 }
 export function removeFog() {
-
     if (fogMesh) {
-        scene.remove(fogMesh);
-        fogMesh.geometry.dispose();
-        fogMesh.material.dispose();
+        scene?.remove?.(fogMesh);
+        fogMesh.geometry?.dispose?.();
+        fogMesh.material?.dispose?.();
         fogMesh = null;
     }
-
-    scene.fog = null;
+    if (scene && 'fog' in scene) {
+        scene.fog = null;
+    }
 }
 
 
@@ -2047,24 +2095,4 @@ function updateSkyForSeason(type) {
     sunLight.intensity = sunIntensity;
 }
 
-/**
- * Main animation loop.
- * Updates all dynamic elements in the scene each frame.
- */
-function animate() {
-    requestAnimationFrame(animate);
-    cloudMove();
-    const deltaTime = clock.getDelta();
-    updateMoon(deltaTime);
-    updateAurora();
-    updateRain();
-    updateSnow();
-    updateStorm();
-    updateWind();
-    updateFog();
-    updateSummerEffect();
-    updateAutumnEffect();
-    updateSpringEffect();
-    updateGustSystem();
-}
-animate();
+// NOTE: All environment updates are driven by the central animation loop in main.js

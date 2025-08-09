@@ -1,24 +1,24 @@
 :root {
-    /* Color System */
-    --color-primary: #3B7A57;       /* Emerald for nature theme */
-    --color-primary-light: #60A976;
-    --color-primary-dark: #2A5540;
+    /* Modern Color System (Trendy) */
+    --color-primary: #4F46E5;       /* Indigo-600 */
+    --color-primary-light: #818CF8; /* Indigo-400 */
+    --color-primary-dark: #3730A3;  /* Indigo-800 */
 
-    --color-secondary: #EE6C4D;     /* Coral/terracotta */
-    --color-secondary-light: #F8886D;
-    --color-secondary-dark: #D14F32;
+    --color-secondary: #06B6D4;     /* Cyan-500 */
+    --color-secondary-light: #22D3EE; /* Cyan-400 */
+    --color-secondary-dark: #0E7490;  /* Cyan-700 */
 
-    --color-accent: #FFB30F;        /* Golden yellow */
-    --color-accent-light: #FFCA5A;
-    --color-accent-dark: #E09A00;
+    --color-accent: #F59E0B;        /* Amber-500 */
+    --color-accent-light: #FBBF24;  /* Amber-400 */
+    --color-accent-dark: #B45309;   /* Amber-700 */
 
-    --color-bg: #F5F2EB;            /* Light natural base */
+    --color-bg: #F8FAFC;            /* Slate-50 */
     --color-bg-panel: rgba(255, 255, 255, 0.85);
     --color-bg-panel-solid: #FFFFFF;
 
-    --color-text: #293241;          /* Deep navy for text */
-    --color-text-light: #5D6B7E;
-    --color-text-muted: #8D99A7;
+    --color-text: #0F172A;          /* Slate-900 */
+    --color-text-light: #334155;    /* Slate-700 */
+    --color-text-muted: #64748B;    /* Slate-500 */
     --color-text-inverse: #FFFFFF;
 
     /* Functional Colors */
@@ -67,10 +67,25 @@ body {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background: var(--color-bg);
     color: var(--color-text);
     box-sizing: border-box;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+    --color-bg: #0B1220;            /* Deep slate */
+    --color-bg-panel: rgba(15, 23, 42, 0.6);
+    --color-bg-panel-solid: #0F172A;
+    --color-text: #E2E8F0;          /* Slate-200 */
+    --color-text-light: #CBD5E1;    /* Slate-300 */
+    --color-text-muted: #94A3B8;    /* Slate-400 */
+    --hotbar-bg: rgba(2, 6, 23, 0.55);
+    --slot-bg: #111827;             /* Gray-900 */
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.35);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.45);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.55);
 }
 
 .app-container {
@@ -121,6 +136,10 @@ body {
     text-shadow: 0 2px 8px rgba(41, 50, 65, 0.2);
 }
 
+.header-actions .header-btn {
+    min-width: 100px;
+}
+
 .header-actions {
     display: flex;
     gap: 12px;
@@ -150,20 +169,233 @@ body {
 /* Scene Container */
 #scene-container {
     position: relative;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: calc(100vh - 72px);
     overflow: hidden;
     align-content: center;
+}
+
+/* Application Shell Layout */
+.app-shell {
+    position: relative;
+    display: grid;
+    grid-template-columns: 280px 1fr 420px;
+    grid-template-rows: calc(100vh - 72px);
+    gap: 0;
+}
+
+.sidebar {
+    grid-column: 1 / 2;
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: var(--color-bg-panel);
+    border-right: 1px solid rgba(255,255,255,0.4);
+    height: calc(100vh - 72px);
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+.scene-overlay-controls {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+/* Left panel container: minimal chrome, no animation */
+.sidebar .scene-overlay-controls {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    border-radius: 0;
+    transition: none;
+    padding: 0;
+    margin: 0;
+}
+
+.scene-overlay-controls .overlay-btn {
+    position: relative;
+    width: 100%;
+    min-height: 44px;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    color: var(--color-text);
+    background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.6));
+    border: 1px solid rgba(148,163,184,0.35);
+    outline: none;
+}
+
+/* Left panel buttons: reduce animation to minimum */
+.sidebar .overlay-btn {
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+    box-shadow: none;
+}
+.sidebar .overlay-btn:hover,
+.sidebar .overlay-btn.active {
+    transform: none;
+    box-shadow: none;
+}
+
+.scene-overlay-controls .overlay-btn:focus-visible {
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.45);
+}
+
+.scene-overlay-controls .overlay-btn[aria-pressed="true"],
+.scene-overlay-controls .overlay-btn.active {
+    background: linear-gradient(180deg, rgba(99,102,241,0.18), rgba(99,102,241,0.08));
+    border-color: rgba(99,102,241,0.55);
+}
+
+.controls-dock {
+    grid-column: 3 / 4;
+    padding: 16px;
+    display: grid;
+    grid-template-rows: auto auto auto 1fr;
+    gap: 14px;
+    background: var(--color-bg-panel);
+    border-left: 1px solid rgba(255,255,255,0.4);
+}
+
+.controls-dock > .scene-overlay-season-controls,
+.controls-dock > .scene-overlay-weather-controls,
+.controls-dock > .scene-overlay-night-and-days,
+.controls-dock > .scene-overlay-wind-controls {
+    border: 1px solid rgba(99,102,241,0.25);
+    background: linear-gradient(180deg, rgba(15,23,42,0.02), rgba(15,23,42,0.01));
+}
+
+/* Arrange season and weather buttons in compact rows */
+.controls-dock .scene-overlay-season-controls,
+.controls-dock .scene-overlay-weather-controls {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    padding: 12px;
+}
+
+.controls-dock .scene-overlay-night-and-days {
+    display: flex;
+    justify-content: center;
+    padding: 10px 12px;
+}
+
+.controls-dock .scene-overlay-wind-controls {
+    padding: 12px 14px;
+}
+
+.controls-dock .scene-overlay-wind-controls label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.controls-dock .scene-overlay-wind-controls input[type="range"] {
+    flex: 1;
+}
+
+.controls-dock .scene-overlay-wind-controls input[type="number"] {
+    width: 64px;
+}
+
+.controls-dock .overlay-btn {
+    border-radius: 10px;
+    border: 1px solid rgba(148,163,184,0.35);
+    background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.6));
+    color: var(--color-text);
+}
+
+.controls-dock .overlay-btn:focus-visible {
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.35);
+}
+
+.app-header {
+    height: 72px;
+}
+
+/* Responsive grid for very wide screens */
+@media (min-width: 1800px) {
+  .app-shell { grid-template-columns: 320px 1fr 520px; }
+}
+
+/* Collapse right dock on small widths */
+@media (max-width: 1200px) {
+  .app-shell { grid-template-columns: 240px 1fr; }
+  .controls-dock { display: none; }
+}
+
+/* Stack layout on mobile */
+@media (max-width: 768px) {
+  .app-shell { display: block; }
+  #scene-container { height: calc(100vh - 72px); }
+  .sidebar { position: absolute; left: 12px; right: 12px; top: 84px; z-index: 15; }
+}
+
+/* Position Overlays logically when docked */
+.controls-dock .scene-overlay-weather-container,
+.controls-dock .scene-overlay-wind-controls,
+.controls-dock .scene-overlay-season-controls,
+.controls-dock .scene-overlay-weather-controls,
+.controls-dock .scene-overlay-night-and-days,
+.sidebar .scene-overlay-controls,
+.sidebar .scene-overlay-add-and-remove {
+    position: relative;
+    left: auto; right: auto; top: auto; bottom: auto;
+    transform: none;
+}
+
+/* Docked item panel placement */
+.controls-dock .overlay-item-panel {
+    position: fixed; /* keep within viewport on Edge fullscreen */
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    width: auto;
 }
 
 /* Three.js Canvas */
 #scene-container canvas {
     display: block;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     position: absolute;
     top: 0; left: 0;
     z-index: 1;
+}
+
+/* Center floating actions (+ / ×) */
+.scene-overlay-center-actions {
+    position: absolute;
+    z-index: 20;
+    left: 50%;
+    bottom: 5vh;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 14px;
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: var(--glass-blur) var(--glass-saturation);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 14px;
+    padding: 10px 12px;
+    box-shadow: var(--shadow-md);
+}
+
+.scene-overlay-center-actions .overlay-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    font-size: 1.6rem;
+    border: 1px solid rgba(148,163,184,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.6));
+    color: var(--color-text);
+}
+
+@media (max-height: 700px) {
+  .scene-overlay-center-actions { bottom: 12px; }
 }
 
 /* Common Overlay Styles */
@@ -262,20 +494,18 @@ body {
 }
 /* Add and Remove Panel */
 .scene-overlay-add-and-remove {
-    position: absolute;
-    left: 400px; /* Positioned to the right of controls */
-    bottom: 32vh; /* Same vertical position as controls */
-    width: 100px;
-    height: 180px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
-    background-color: rgba(255, 255, 255, 0.4);
+    position: relative;
+    left: auto;
+    bottom: auto;
+    width: 100%;
+    height: auto;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    background-color: rgba(255, 255, 255, 0.35);
     backdrop-filter: var(--glass-blur) var(--glass-saturation);
-    border-radius: var(--radius-xl);
-    padding: 16px;
+    border-radius: 12px;
+    padding: 10px;
 }
 
 .scene-overlay-weather-controls {
@@ -569,8 +799,8 @@ body {
 .overlay-btn:hover, .overlay-btn.active {
     background: var(--color-accent);
     color: var(--color-text);
-    transform: scale(1.05);
-    box-shadow: var(--shadow-lg), 0 0 0 4px rgba(255, 179, 15, 0.3);
+    transform: none; /* minimize motion */
+    box-shadow: var(--shadow-lg);
 }
 
 /* Button Positioning */
@@ -612,6 +842,14 @@ body {
 
 .overlay-btn[data-category="buildings"]:hover {
     transform: translateX(-50%) scale(1.05);
+}
+
+/* Neutralize absolute positioning inside docked layouts */
+.sidebar .overlay-btn,
+.controls-dock .overlay-btn {
+    position: relative;
+    top: auto; left: auto; right: auto; bottom: auto;
+    transform: none;
 }
 
 .overlay-btn[data-category="sunny"],
@@ -679,23 +917,23 @@ body {
 }
 
 .overlay-btn[data-category="spring"] {
-    background-color: #77DD77; /* 연두빛 봄 느낌 */
-    color: #2F4F4F; /* 진한 회색톤 */
+    background-color: #34D399; /* Emerald-400 */
+    color: #064E3B; /* Emerald-900 */
 }
 
 .overlay-btn[data-category="summer"] {
-    background-color: #FF7F50; /* 산호빛, 여름의 따뜻함 */
-    color: white;
+    background-color: #F97316; /* Orange-500 */
+    color: #111827;
 }
 
 .overlay-btn[data-category="autumn"] {
-    background-color: #00CED1; /* Dark Turquoise - 청량한 터쿼이즈 */
-    color: white;
+    background-color: #EF4444; /* Red-500 */
+    color: #111827;
 }
 
 .overlay-btn[data-category="winter"] {
-    background-color: #4682B4; /* 스틸블루, 겨울 느낌 차분하게 */
-    color: white;
+    background-color: #60A5FA; /* Blue-400 */
+    color: #0B1220;
 }
 
 
@@ -730,24 +968,25 @@ body {
 
 /* Item Panel (Hotbar) */
 .overlay-item-panel {
-    position: absolute;
+    position: fixed;
     left: 50%;
-    bottom: 4vw;
+    bottom: 24px;
     transform: translateX(-50%);
-    z-index: 20;
-    min-width: 10px;
+    z-index: 30; /* above center actions */
+    width: min(90vw, 640px);
+    min-width: 280px;
     background: var(--hotbar-bg);
     border: none;
     border-radius: var(--hotbar-radius);
     box-shadow: var(--shadow-md);
-    padding: 18px 24px 14px 24px;
+    padding: 12px 16px 12px 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
     pointer-events: auto;
     user-select: none;
     gap: 0;
-    transition: all var(--transition-medium), transform 0.3s cubic-bezier(.4,1.4,.6,1);
+    transition: all var(--transition-medium), transform 0.2s ease;
     backdrop-filter: var(--glass-blur) var(--glass-saturation);
 }
 
@@ -760,9 +999,16 @@ body {
     box-shadow: 0 16px 48px 0 rgba(238, 108, 77, 0.25), 0 4px 12px rgba(41, 50, 65, 0.2);
 }
 
-/* Hide header */
+/* Header visible for drag */
 .overlay-item-panel-header {
-    display: none;
+    display: block;
+    width: 100%;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--color-text-light);
+    padding: 6px 2px 10px 2px;
+    cursor: move;
+    user-select: none;
 }
 
 /* Item List */
@@ -1483,75 +1729,7 @@ body {
     }
 }
 
-.weather-event-panel {
-    position: fixed;
-    top: 60px;
-    right: -340px; /* 숨겨진 상태 */
-    width: 320px;
-    height: 70vh;
-    background: var(--color-bg-panel);
-    box-shadow: var(--shadow-lg);
-    border-radius: var(--radius-xl) 0 0 var(--radius-xl);
-    z-index: 2000;
-    transition: right 0.4s var(--transition-medium);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-.weather-event-panel.active {
-    right: 0; /* 나타나는 상태 */
-}
-.weather-event-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 18px 20px 12px 24px;
-    font-size: 1.2em;
-    font-weight: bold;
-    color: var(--color-primary-dark);
-    border-bottom: 1px solid #e0e0e0;
-    background: rgba(255,255,255,0.92);
-}
-#close-weather-event-panel {
-    background: transparent;
-    border: none;
-    font-size: 1.6em;
-    color: #888;
-    cursor: pointer;
-}
-.weather-event-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 18px 12px 12px 18px;
-}
-.weather-event-card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px 10px;
-    margin-bottom: 10px;
-    border-radius: var(--radius-md);
-    background: rgba(255,255,255,0.8);
-    box-shadow: var(--shadow-sm);
-    font-size: 1.08em;
-    transition: background 0.2s;
-}
-.weather-event-card[data-type="stormy"] { background: #f3e6ff; }
-.weather-event-card[data-type="rainy"] { background: #e3f1ff; }
-.weather-event-card[data-type="snowy"] { background: #eaf6fa; }
-.weather-event-card[data-type="sunny"] { background: #fff9e3; }
-.weather-event-card[data-type="cloudy"] { background: #f0f4f7; }
-.weather-event-time {
-    min-width: 64px;
-    color: #888;
-    font-size: 0.98em;
-}
-.weather-event-icon {
-    font-size: 1.7em;
-}
-.weather-event-desc {
-    flex: 1;
-}
+/* removed weather-event panel */
 
 
 .scene-overlay-wind-controls {

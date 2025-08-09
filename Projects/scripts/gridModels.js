@@ -1,5 +1,5 @@
-import * as THREE from '../build/three.module.js';
-import { GLTFLoader } from '../build/GLTFLoader.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { scene, camera } from './sceneManager.js';
 
 export let clips, highlight, tree, cow, grass, sheep, cloud, barn, fence, chicken, pig, hay, rock, carrot, potato, tomato, wheat, soil, stonePath, pebble, pSoil, tSoil, wSoil, path, pine, loader, windmill;
@@ -60,10 +60,34 @@ export function loadScene() {
     
     loadModels();
     setupGridInteractions();
+    // Ensure animation loop for mixers starts even if app loop is separate
+    // This guarantees animated models (e.g., windmill fallback) update immediately
+    animate();
 }
 
 function loadModels() { 
     loader = new GLTFLoader();
+
+    // Helper: load with CDN fallback when local asset is missing
+    const loadWithFallback = (primaryUrl, fallbackUrl, onLoad) => {
+        loader.load(
+            primaryUrl,
+            (gltf) => onLoad(gltf),
+            undefined,
+            () => {
+                if (fallbackUrl) {
+                    loader.load(
+                        fallbackUrl,
+                        (gltf) => onLoad(gltf),
+                        undefined,
+                        (err) => console.error('GLTF fallback failed:', fallbackUrl, err)
+                    );
+                } else {
+                    console.warn('GLTF load failed and no fallback provided:', primaryUrl);
+                }
+            }
+        );
+    };
 
     loader.load("models/tree/scene.gltf", (gltf) => {
         tree = gltf.scene;
@@ -225,13 +249,14 @@ function loadModels() {
         //scene.add(pebble);
     });
 
-    const stonePathTexture = textureLoad.load('models/stonePath/textures');
+// NOTE: Placeholder texture path avoided to prevent 404s; keep null unless available
+const stonePathTexture = null;
     loader.load("models/stonePath/scene.gltf", (gltf) => { //수정필요
         stonePath = gltf.scene;
         stonePath.scale.set(2, 2, 2);
         stonePath.position.set(0, 5, 0);
         stonePath.traverse(node => {
-            if(node.isMesh)  {
+            if(node.isMesh && stonePathTexture)  {
                 node.material.map = stonePathTexture;
             }
         });
@@ -410,19 +435,22 @@ function loadModels() {
     path.rotation.set(-Math.PI/2, 0, 0);
     path.name = "Path";
 
-    loader.load("models/windmill/scene.gltf", (gltf) => {
-        windmill = gltf.scene;
-        windmill.scale.set(1.5, 2, 1.5);
-        windmill.position.set(0, 6, 0);
-        windmill.traverse(node => {
-            if(node.isMesh) node.castShadow = true;
-        });
-        windmill.rotation.set(0, -Math.PI, 0);
-        windmill.name = "Windmill";
-        createBox(windmill, 1, 1, 1);
+    // Windmill: local first, fallback to animated GLB so animation works immediately
+    loadWithFallback(
+        "models/windmill/scene.gltf",
+        "https://threejs.org/examples/models/gltf/Fox.glb",
+        (gltf) => {
+            windmill = gltf.scene;
+            windmill.scale.set(1.5, 2, 1.5);
+            windmill.position.set(0, 6, 0);
+            windmill.traverse(node => { if (node.isMesh) node.castShadow = true; });
+            windmill.rotation.set(0, -Math.PI, 0);
+            windmill.name = "Windmill";
+            createBox(windmill, 1, 1, 1);
 
-        clips = gltf.animations;
-    });
+            clips = gltf.animations || [];
+        }
+    );
 }
 
 const clock = new THREE.Clock();
@@ -601,10 +629,12 @@ document.querySelector('[data-category="buildings"] .draggable-item:nth-child(3)
     const nMixer = new THREE.AnimationMixer(nWindmill);
     mixers.push(nMixer); // 배열에 추가
 
-    const clip = THREE.AnimationClip.findByName(clips, 'Action');
+    const clip = THREE.AnimationClip.findByName(clips, 'Action') || (clips && clips[0]);
     if (clip) {
         const action = nMixer.clipAction(clip);
         action.play();
+    } else {
+        console.warn('No animation clip found on windmill; ensure model has animations.');
     }
 
     setModel(nWindmill, { width: modelData["Windmill"].width, height: modelData["Windmill"].height }, true);

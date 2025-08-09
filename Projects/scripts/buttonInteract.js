@@ -1,4 +1,4 @@
-import * as THREE from '../build/three.module.js';
+import * as THREE from 'three';
 import { scene, camera } from './sceneManager.js';
 import { grasses, clips, grid , setGrid, modelData, setModel, cow, hay, soil, rock, tree, fence, barn, pSoil, tSoil, wSoil, wheat, sheep, path, chicken, pig, pine, pebble, windmill} from './gridModels.js';
 import * as env from './environment.js';
@@ -278,7 +278,7 @@ document.getElementById('windTurbulenceSlider').addEventListener('input', (e) =>
 function updateWindDirection() {
     const x = parseFloat(document.getElementById('windDirX').value);
     const z = parseFloat(document.getElementById('windDirZ').value);
-    env.setWind(x, 0, z);
+    env.setWindDirection(x, 0, z);
 }
 document.getElementById('windDirX').addEventListener('input', updateWindDirection);
 document.getElementById('windDirZ').addEventListener('input', updateWindDirection);
