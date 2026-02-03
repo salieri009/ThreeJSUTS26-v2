@@ -1,0 +1,403 @@
+{
+  "accessors": [
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 2196,
+      "max": [
+        1.061216950416565,
+        2.104325294494629,
+        1.3990230560302734
+      ],
+      "min": [
+        -1.061216950416565,
+        -1.7409329414367676,
+        -1.4584370851516724
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 26352,
+      "componentType": 5126,
+      "count": 2196,
+      "max": [
+        0.9997988939285278,
+        0.9999902248382568,
+        0.9969593286514282
+      ],
+      "min": [
+        -0.9997988939285278,
+        -0.9999905824661255,
+        -1.0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 2196,
+      "max": [
+        2.625000238418579,
+        0.7500004172325134
+      ],
+      "min": [
+        0.24999991059303284,
+        0.0
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 3282,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 52704,
+      "componentType": 5126,
+      "count": 72,
+      "max": [
+        0.45161402225494385,
+        -1.0732561349868774,
+        0.40133702754974365
+      ],
+      "min": [
+        -0.45161402225494385,
+        -1.772587537765503,
+        -0.17548778653144836
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 53568,
+      "componentType": 5126,
+      "count": 72,
+      "max": [
+        0.9990323781967163,
+        -0.04379909113049507,
+        0.8116262555122375
+      ],
+      "min": [
+        -0.9990323781967163,
+        -0.9711714386940002,
+        -0.8318211436271667
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 17568,
+      "componentType": 5126,
+      "count": 72,
+      "max": [
+        0.6678954362869263,
+        0.8309948444366455
+      ],
+      "min": [
+        0.46882688999176025,
+        0.75
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 13128,
+      "componentType": 5125,
+      "count": 108,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 54432,
+      "componentType": 5126,
+      "count": 152,
+      "max": [
+        1.041459560394287,
+        -0.7512403726577759,
+        1.3388031721115112
+      ],
+      "min": [
+        -1.041459560394287,
+        -1.7832362651824951,
+        -0.3912874162197113
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 56256,
+      "componentType": 5126,
+      "count": 152,
+      "max": [
+        0.6089882850646973,
+        -0.7031097412109375,
+        0.6076370477676392
+      ],
+      "min": [
+        -0.6089882850646973,
+        -0.9973949193954468,
+        -0.5781107544898987
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 18144,
+      "componentType": 5126,
+      "count": 152,
+      "max": [
+        0.7249147295951843,
+        0.8749999403953552
+      ],
+      "min": [
+        0.24999991059303284,
+        0.7144118547439575
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 13560,
+      "componentType": 5125,
+      "count": 228,
+      "type": "SCALAR"
+    }
+  ],
+  "asset": {
+    "extras": {
+      "author": "assetfactory (https://sketchfab.com/assetfactory)",
+      "license": "SKETCHFAB Standard (https://sketchfab.com/licenses)",
+      "source": "https://sketchfab.com/3d-models/lowpoly-origami-pig-2a74e808c7984b09a13f4daec0ab373d",
+      "title": "Lowpoly origami pig"
+    },
+    "generator": "Sketchfab-16.33.0",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 14472,
+      "name": "floatBufferViews",
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 19360,
+      "byteOffset": 14472,
+      "byteStride": 8,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 58080,
+      "byteOffset": 33832,
+      "byteStride": 12,
+      "name": "floatBufferViews",
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 91912,
+      "uri": "scene.bin"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "Pink",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.8,
+          0.463962,
+          0.573833,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.8785062953212363
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "Black",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.00802319,
+          0.00802319,
+          0.00749903,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.998214422430724
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "Pink2",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.8,
+          0.293519,
+          0.333613,
+          1.0
+        ],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.9096423607273724
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Cube_Pink_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Cube_Black_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 5,
+            "POSITION": 4,
+            "TEXCOORD_0": 6
+          },
+          "indices": 7,
+          "material": 1,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Cube_Pink2_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 9,
+            "POSITION": 8,
+            "TEXCOORD_0": 10
+          },
+          "indices": 11,
+          "material": 2,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "children": [
+        1
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.220446049250313e-16,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        2.220446049250313e-16,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "Sketchfab_model"
+    },
+    {
+      "children": [
+        2
+      ],
+      "matrix": [
+        0.009999999776482582,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.009999999776482582,
+        0.0,
+        0.0,
+        -0.009999999776482582,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "Origami_Pig.fbx"
+    },
+    {
+      "children": [
+        3
+      ],
+      "name": "RootNode"
+    },
+    {
+      "children": [
+        4,
+        5,
+        6
+      ],
+      "matrix": [
+        100.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -1.629206793918314e-05,
+        -99.99999999999868,
+        0.0,
+        0.0,
+        99.99999999999868,
+        -1.629206793918314e-05,
+        0.0,
+        0.0,
+        145.92025756835938,
+        0.0,
+        1.0
+      ],
+      "name": "Cube"
+    },
+    {
+      "mesh": 0,
+      "name": "Cube_Pink_0"
+    },
+    {
+      "mesh": 1,
+      "name": "Cube_Black_0"
+    },
+    {
+      "mesh": 2,
+      "name": "Cube_Pink2_0"
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Sketchfab_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ]
+}
