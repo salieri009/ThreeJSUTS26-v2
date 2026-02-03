@@ -1,28 +1,19 @@
 import * as THREE from 'three';
 import { scene, camera } from './sceneManager.js';
 import { grasses, clips, grid , setGrid, modelData, setModel, cow, hay, soil, rock, tree, fence, barn, pSoil, tSoil, wSoil, wheat, sheep, path, chicken, pig, pine, pebble, windmill} from './gridModels.js';
-import * as env from './environment.js';
+import { weather,  updateSky } from './environment.js';
 
-
+let level = 1;
 let isRemoving = false;
-let isRealtimeMode = false;
-let level = 1 ;
-//===================================
+
 export function addBlock() {
-    if (grid) scene.remove(grid)
+    if (grid) scene.remove(grid);
+
     let size = level * 10;
     const newGrid = new THREE.GridHelper(size, size / 2);
     newGrid.position.set(-size / 2 + 5, 6, -size / 2 + 5);
     scene.add(newGrid);
     setGrid(newGrid);
-
-    let grassColorKey = 'default';
-    if (env.season.spring) grassColorKey = 'spring';
-    else if (env.season.summer) grassColorKey = 'summer';
-    else if (env.season.autumn) grassColorKey = 'autumn';
-    else if (env.season.winter) grassColorKey = 'winter';
-    else if (env.weather.rainy) grassColorKey = 'rainy';
-    else if (env.weather.snowy) grassColorKey = 'snowy';
 
     for (let i = 0; i < level; i++) {
         for (let j = 0; j < level; j++) {
@@ -32,15 +23,16 @@ export function addBlock() {
             );
             dirt.position.set(-i * 10, 0, -j * 10);
             scene.add(dirt);
-
+            dirt.name = "Grid";
             let newGrass = new THREE.Mesh(
                 new THREE.BoxGeometry(10, 2, 10),
-                new THREE.MeshLambertMaterial({ color: env.GRASS_COLORS[grassColorKey] })
+                new THREE.MeshLambertMaterial({ color: 0x3E5C3A })
             );
             newGrass.position.set(-i * 10, 5, -j * 10);
             newGrass.receiveShadow = true;
             scene.add(newGrass);
             grasses.push(newGrass);
+            newGrass.name = "Grass";
 
             let highlight = new THREE.Mesh(
                 new THREE.PlaneGeometry(1, 1),
@@ -51,11 +43,8 @@ export function addBlock() {
             scene.add(highlight);
         }
     }
-
-    env.setGrassColorByKey(grassColorKey);
     level++;
 }
-
 
 export function deleteModel() {
     isRemoving = true;
@@ -75,7 +64,7 @@ export function deleteModel() {
             let root = intersects[0].object;
             while (root.parent && root.parent.type !== "Scene")  root = root.parent;
             if (isRemoving) {
-                if(root.name !== "Sky" ) {
+                if(root.name !== "Sky" && root.name !== "Highlight" && root.name !== "Grid" && root.name !== "Dirt" && root.name !== "Grass") {
                     scene.remove(root);
                     isRemoving = false;
                 }
@@ -84,33 +73,7 @@ export function deleteModel() {
     });
 }
 
-
-
-document.querySelector('[data-category="terrain expansion"]').addEventListener('click', () => {
-        if (level < 8)
-            addBlock();
-        env.addCloudsRange(level);
-        if (env.weather.stormy) {
-            env.setWeather('stormy');
-            env.loadClouds();
-
-        } else if (env.weather.rainy) {
-            env.setWeather('rainy');
-        } else if (env.weather.snowy) {
-            env.setWeather('snowy');
-        } else if (env.weather.cloudy) {
-            env.setWeather('cloudy');
-        } else {
-            env.setWeather('sunny');
-        }
-
-        if (env.weather.rainy || env.weather.stormy)
-            env.addPuddle();
-    }
-
-
-);
-
+document.querySelector('[data-category="terrain expansion"]').addEventListener('click', () => { if(level < 8) addBlock(); });
 document.querySelector('[data-category="remove"]').addEventListener('click', () => { deleteModel(); });
 
 //props
@@ -155,8 +118,6 @@ document.querySelector('[data-category="props"] .draggable-item:nth-child(5)').a
 
 document.querySelector('[data-category="props"] .draggable-item:nth-child(6)').addEventListener('click', () => {
     const nPath = path.clone();
-    nPath.position.set(0, 5.1, 0);
-    nPath.rotation.set(-Math.PI/2, 0, 0);
     scene.add(nPath);
     setModel(nPath, { width: modelData["Path"].width, height: modelData["Path"].height }, true);
 });
@@ -238,70 +199,12 @@ document.querySelector('[data-category="buildings"] .draggable-item:nth-child(2)
     setModel(nBarn, { width: modelData["Barn"].width, height: modelData["Barn"].height}, true);
 });
 
-
-
-//=================Seasons==========================================
-// Season buttons
-['spring', 'summer', 'autumn', 'winter'].forEach(season => {
-    document.querySelector(`[data-category="${season}"]`)
-        .addEventListener('click', () => env.setSeason(season));
+document.querySelector('[data-category="cloudy"]').addEventListener('click', () => {
+     weather.cloudy = true; 
+     updateSky();
 });
 
-// Weather buttons
-['cloudy', 'sunny', 'rainy', 'snowy', 'stormy'].forEach(weather => {
-    document.querySelector(`[data-category="${weather}"]`)
-        .addEventListener('click', () => env.setWeather(weather));
+document.querySelector('[data-category="sunny"]').addEventListener('click', () => {
+     weather.cloudy = false; 
+     updateSky();
 });
-
-//==============Trigger the night mode===================================
-
-document.querySelector('[data-category="btn-night"]').addEventListener('click', () => {
-    env.setNightMode();
-});
-//================= Wind Controls ====================================
-
-// Wind Strength Slider: Updates wind strength and displays the value
-document.getElementById('windStrengthSlider').addEventListener('input', (e) => {
-    const value = parseFloat(e.target.value);
-    env.setWindStrength(value);
-    document.getElementById('windStrengthValue').textContent = value.toFixed(2);
-});
-
-// Wind Turbulence Slider: Adjusts wind turbulence intensity
-document.getElementById('windTurbulenceSlider').addEventListener('input', (e) => {
-    const value = parseFloat(e.target.value);
-    env.setWindTurbulence(value);
-    document.getElementById('windTurbulenceValue').textContent = value.toFixed(2);
-});
-
-// Wind Direction: Handles X/Z axis inputs for wind vector
-function updateWindDirection() {
-    const x = parseFloat(document.getElementById('windDirX').value);
-    const z = parseFloat(document.getElementById('windDirZ').value);
-    env.setWindDirection(x, 0, z);
-}
-document.getElementById('windDirX').addEventListener('input', updateWindDirection);
-document.getElementById('windDirZ').addEventListener('input', updateWindDirection);
-
-
-
-//===================================================== Real Time Changer =========== Will be added
-let scheduledEvents = [];
-
-function generateWeatherSchedule(days = 5) {
-    const now = Date.now();
-    const HOUR = 3600000;
-
-    for (let i = 0; i < days * 24; i++) {
-        const timestamp = now + (i * HOUR);
-        const event = {
-            time: new Date(timestamp),
-            type: getRandomWeather(),
-            duration: Math.floor(Math.random() * 3 + 1)
-        };
-        scheduledEvents.push(event);
-    }
-}
-
-
-//====================================================================================

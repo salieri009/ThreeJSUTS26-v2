@@ -2,12 +2,11 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { scene, camera } from './sceneManager.js';
 
-export let clips, highlight, tree, cow, grass, sheep, cloud, barn, fence, chicken, pig, hay, rock, carrot, potato, tomato, wheat, soil, stonePath, pebble, pSoil, tSoil, wSoil, path, pine, loader, windmill;
+export let clips, highlight, tree, cow, grass, sheep, cloud, barn, fence, chicken, pig, hay, rock, carrot, potato, tomato, wheat, soil, stonePath, pebble, pSoil, tSoil, wSoil, path, pine, loader, windmill, grassRandom;
 let placingMesh, mixer = null;
 let carrotField;
-//======================
 export let grasses = [];
-//======================
+
 export let grid = new THREE.GridHelper(10, 5);
 const gridSize = 2;
 export let selectedObject ;
@@ -41,7 +40,6 @@ export const modelData = {
     "Windmill": { width: 2, height: 2},
 }
 
-//==========================================
 export function loadScene() {
     const dirt = new THREE.Mesh(
         new THREE.BoxGeometry(10, 8, 10),
@@ -60,34 +58,10 @@ export function loadScene() {
     
     loadModels();
     setupGridInteractions();
-    // Ensure animation loop for mixers starts even if app loop is separate
-    // This guarantees animated models (e.g., windmill fallback) update immediately
-    animate();
 }
 
 function loadModels() { 
     loader = new GLTFLoader();
-
-    // Helper: load with CDN fallback when local asset is missing
-    const loadWithFallback = (primaryUrl, fallbackUrl, onLoad) => {
-        loader.load(
-            primaryUrl,
-            (gltf) => onLoad(gltf),
-            undefined,
-            () => {
-                if (fallbackUrl) {
-                    loader.load(
-                        fallbackUrl,
-                        (gltf) => onLoad(gltf),
-                        undefined,
-                        (err) => console.error('GLTF fallback failed:', fallbackUrl, err)
-                    );
-                } else {
-                    console.warn('GLTF load failed and no fallback provided:', primaryUrl);
-                }
-            }
-        );
-    };
 
     loader.load("models/tree/scene.gltf", (gltf) => {
         tree = gltf.scene;
@@ -249,14 +223,13 @@ function loadModels() {
         //scene.add(pebble);
     });
 
-// NOTE: Placeholder texture path avoided to prevent 404s; keep null unless available
-const stonePathTexture = null;
+    const stonePathTexture = textureLoad.load('models/stonePath/textures');
     loader.load("models/stonePath/scene.gltf", (gltf) => { //수정필요
         stonePath = gltf.scene;
         stonePath.scale.set(2, 2, 2);
         stonePath.position.set(0, 5, 0);
         stonePath.traverse(node => {
-            if(node.isMesh && stonePathTexture)  {
+            if(node.isMesh)  {
                 node.material.map = stonePathTexture;
             }
         });
@@ -435,22 +408,26 @@ const stonePathTexture = null;
     path.rotation.set(-Math.PI/2, 0, 0);
     path.name = "Path";
 
-    // Windmill: local first, fallback to animated GLB so animation works immediately
-    loadWithFallback(
-        "models/windmill/scene.gltf",
-        "https://threejs.org/examples/models/gltf/Fox.glb",
-        (gltf) => {
-            windmill = gltf.scene;
-            windmill.scale.set(1.5, 2, 1.5);
-            windmill.position.set(0, 6, 0);
-            windmill.traverse(node => { if (node.isMesh) node.castShadow = true; });
-            windmill.rotation.set(0, -Math.PI, 0);
-            windmill.name = "Windmill";
-            createBox(windmill, 1, 1, 1);
+    loader.load("models/windmill/scene.gltf", (gltf) => {
+        windmill = gltf.scene;
+        windmill.scale.set(1.5, 2, 1.5);
+        windmill.position.set(0, 6, 0);
+        windmill.traverse(node => {
+            if(node.isMesh) node.castShadow = true;
+        });
+        windmill.rotation.set(0, -Math.PI, 0);
+        windmill.name = "Windmill";
+        createBox(windmill, 1, 1, 1);
 
-            clips = gltf.animations || [];
-        }
-    );
+        clips = gltf.animations;
+    });
+
+    loader.load("models/grass/scene.gltf", (gltf) => {
+        grassRandom = gltf.scene;
+        grassRandom.scale.set(0.045, 0.045, 0.05);
+        grassRandom.position.set(0.5, 8.5, 0);
+        scene.add(grassRandom);
+    });
 }
 
 const clock = new THREE.Clock();
@@ -466,7 +443,7 @@ function setupGridInteractions() {
     highlight.rotation.x = -Math.PI / 2;
     highlight.position.set(0, 6.05, 0);
     scene.add(highlight);
-
+    highlight.name = "Highlight";
     grid.position.set(0, 6, 0);
     scene.add(grid);
 }
@@ -554,7 +531,7 @@ window.addEventListener("mousedown", (event) => {
                 highlight.geometry.dispose();
                 highlight.geometry = new THREE.PlaneGeometry(selectedSize.width * gridSize, selectedSize.height * gridSize);
 
-
+                highlight.name = "Highlight";
                 highlight.rotation.z = -selectedObject.rotation.y;
                 const rotY = selectedObject.rotation.y % (2 * Math.PI);
                 if (Math.abs(rotY - Math.PI / 2) < 0.01 || Math.abs(rotY - 3 * Math.PI / 2) < 0.01) {
@@ -579,6 +556,7 @@ window.addEventListener("mousedown", (event) => {
 
             let y = 6; 
             if (selectedObject.name === "Fence" || selectedObject.name === "Barn" ) y = 7; 
+            else if(selectedObject.name === "Path") y = 5.1;
             
             selectedObject.position.set(gridX - (selectedSize.width === 2 ? 0.5 : 0), y, gridZ);
             selectedObject.visible = true;
@@ -608,6 +586,7 @@ function createBox(model, width, height, depth) {
 
 export function setGrid(newGrid) {
     grid = newGrid;
+    grid.name = "Grid";
 }
 
 export function setModel(object, size, placing = true) {
@@ -629,12 +608,10 @@ document.querySelector('[data-category="buildings"] .draggable-item:nth-child(3)
     const nMixer = new THREE.AnimationMixer(nWindmill);
     mixers.push(nMixer); // 배열에 추가
 
-    const clip = THREE.AnimationClip.findByName(clips, 'Action') || (clips && clips[0]);
+    const clip = THREE.AnimationClip.findByName(clips, 'Action');
     if (clip) {
         const action = nMixer.clipAction(clip);
         action.play();
-    } else {
-        console.warn('No animation clip found on windmill; ensure model has animations.');
     }
 
     setModel(nWindmill, { width: modelData["Windmill"].width, height: modelData["Windmill"].height }, true);
