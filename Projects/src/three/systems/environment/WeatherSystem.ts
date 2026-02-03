@@ -1,30 +1,27 @@
 ﻿// @ts-nocheck
-import * as env from '../../environment';
+import { environmentManager } from '../../environment';
 
 export class WeatherSystem {
-  init() {
+  init(): void {
     // no-op: environment module owns allocations
   }
 
-  update() {
+  update(): void {
     // Drive environment sub-updates that are weather dependent
-    env.updateSky();
-    env.updateRain();
-    env.updateSnow();
-    env.updateStorm();
-    env.updateFog();
-    env.updateWind();
-    env.updateGustSystem();
+    environmentManager.updateSky();
+    environmentManager.updateRain();
+    environmentManager.updateSnow();
+    environmentManager.updateStorm();
+    environmentManager.updateFog();
+    environmentManager.updateWind();
+    environmentManager.updateGustSystem();
   }
 
-  dispose() {
+  dispose(): void {
     // Ensure transient effects are removed
-    env.removeRain?.();
-    env.removeSnow?.();
-    env.removeStorm?.();
-    env.removeFog?.();
+    environmentManager.removeRain?.();
+    environmentManager.removeSnow?.();
+    environmentManager.removeStorm?.();
+    environmentManager.removeFog?.();
   }
 }
-
-
-

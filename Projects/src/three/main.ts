@@ -1,128 +1,119 @@
 ﻿// @ts-nocheck
-// main.js - ?좏뵆由ъ??댁뀡 硫붿씤 吏꾩엯??
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { camera, renderer } from './core/sceneManager';
-import { init as initUI } from './UIManager';
-import { initSeasonSyncUtil } from './seasonSyncUtil';
-import * as env from './environment';
-import { startApp } from './core/app';
-import * as UpdateBus from './core/updateBus';
-import { addBlock, deleteModel } from './buttonInteract';
+/**
+ * =============================================
+ * Main Entry Point - 애플리케이션 진입점
+ * =============================================
+ */
+
+import { sceneManager } from './core/sceneManager';
+import { uiManager } from './UIManager';
+import { seasonSyncManager } from './seasonSyncUtil';
+import { environmentManager } from './environment';
+import { app } from './core/app';
+import { updateBus } from './core/updateBus';
+import { interactionManager } from './buttonInteract';
 import { WeatherSystem } from './systems/environment/WeatherSystem';
 import { SkySystem } from './systems/environment/SkySystem';
 import { PlacementSystem } from './systems/placement/PlacementSystem';
-import { loadScene } from './gridModels';
+import { modelManager } from './gridModels';
 
-// ?꾩뿭 蹂??
+// 전역 상태
 let isInitialized = false;
 
-// ?좏뵆由ъ??댁뀡 珥덇린??
-async function init() {
+/**
+ * 애플리케이션 초기화
+ */
+async function init(): Promise<void> {
     try {
-        console.log('?? Animal Simulator 珥덇린???쒖옉...');
+        console.log('🚀 Animal Simulator 초기화 시작...');
         
-        // 1. ?쒖뒪???깅줉 諛????쒖옉 (???앹꽦 ?좏뻾)
-        startApp((bus, ctx)=>{
-            // 湲곕낯 ????붾뵒 諛?紐⑤뜽 濡쒕뜑 珥덇린??
-            loadScene();
+        // 1. 시스템 등록 및 앱 시작
+        app.start((bus, ctx) => {
+            // 기본 씬 및 모델 로드
+            modelManager.loadScene();
+            
+            // 시스템 등록
             bus.register(new SkySystem());
             bus.register(new WeatherSystem());
             bus.register(new PlacementSystem());
         });
 
-        // 2. UI ?쒖뒪??珥덇린??(??罹붾쾭?ㅺ? 以鍮꾨맂 ??
-        initUI();
+        // 2. UI 시스템 초기화
+        uiManager.init();
         
-        // 3. 怨꾩젅/?좎뵪 ?숆린???쒖뒪??珥덇린??(scene ?섏〈)
-        initSeasonSyncUtil();
+        // 3. 계절/날씨 시스템 초기화
+        seasonSyncManager.init();
 
-        // 4. 湲고? ?대깽??由ъ뒪???ㅼ젙
+        // 4. 기타 이벤트 리스너 설정
         setupEventListeners();
         
         isInitialized = true;
-        console.log('??Animal Simulator 珥덇린???꾨즺!');
+        console.log('✅ Animal Simulator 초기화 완료!');
         
     } catch (error) {
-        console.error('??珥덇린??以??ㅻ쪟 諛쒖깮:', error);
+        console.error('❌ 초기화 중 오류 발생:', error);
     }
 }
 
-// ?대깽??由ъ뒪???ㅼ젙
-function setupEventListeners() {
-    // ?덈룄??由ъ궗?댁쫰 ?대깽??
-    window.addEventListener('resize', onWindowResize);
+/**
+ * 이벤트 리스너 설정
+ */
+function setupEventListeners(): void {
+    // 윈도우 리사이즈 이벤트
+    window.addEventListener('resize', () => sceneManager.onResize());
     
-    // ?ㅻ낫???대깽??
+    // 키보드 이벤트
     document.addEventListener('keydown', onKeyDown);
-    
-    // 踰꾪듉 ?대깽?몃뒗 PlacementSystem?먯꽌 諛붿씤?⑸맖
 }
 
-// ?덈룄??由ъ궗?댁쫰 ?몃뱾??
-function onWindowResize() {
-    if (camera && renderer) {
-        const container = document.getElementById('scene-container');
-        const width = container?.clientWidth || window.innerWidth;
-        const height = container?.clientHeight || window.innerHeight;
-        const aspect = width / height;
-        const ortho = 20;
-        
-        camera.left = -ortho * aspect;
-        camera.right = ortho * aspect;
-        camera.top = ortho;
-        camera.bottom = -ortho;
-        
-        camera.updateProjectionMatrix();
-        renderer.setSize(width, height);
-    }
-}
-
-// ?ㅻ낫???대깽???몃뱾??
-function onKeyDown(event) {
+/**
+ * 키보드 이벤트 핸들러
+ */
+function onKeyDown(event: KeyboardEvent): void {
     switch(event.key.toLowerCase()) {
+        // 계절 변경
         case '1':
-            env.setSeason('spring');
+            environmentManager.setSeason('spring');
             break;
         case '2':
-            env.setSeason('summer');
+            environmentManager.setSeason('summer');
             break;
         case '3':
-            env.setSeason('autumn');
+            environmentManager.setSeason('autumn');
             break;
         case '4':
-            env.setSeason('winter');
+            environmentManager.setSeason('winter');
             break;
+        // 날씨 변경
         case 'q':
-            env.setWeather('sunny');
+            environmentManager.setWeather('sunny');
             break;
         case 'w':
-            env.setWeather('cloudy');
+            environmentManager.setWeather('cloudy');
             break;
         case 'e':
-            env.setWeather('rainy');
+            environmentManager.setWeather('rainy');
             break;
         case 'r':
-            env.setWeather('snowy');
+            environmentManager.setWeather('snowy');
             break;
         case 't':
-            env.setWeather('stormy');
+            environmentManager.setWeather('stormy');
             break;
+        // 시간 변경
         case 'n':
-            env.setNightMode();
+            environmentManager.setNightMode();
             break;
         case 'd':
-            env.setDayMode();
+            environmentManager.setDayMode();
             break;
+        // 지형 확장
         case ' ':
             event.preventDefault();
-            addBlock();
+            interactionManager.addBlock();
             break;
     }
 }
 
-// 硫붿씤 猷⑦봽??core/app.js濡??닿???
-
-// ?좏뵆由ъ??댁뀡 ?쒖옉
+// 애플리케이션 시작
 document.addEventListener('DOMContentLoaded', init);
-

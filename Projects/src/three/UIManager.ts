@@ -1,146 +1,225 @@
 // @ts-nocheck
-let overlayBtns;
-let itemPanel;
-let panelHeader;
-let itemLists;
-let statusMessage;
+/**
+ * =============================================
+ * UIManager Class - UI 상호작용 관리
+ * =============================================
+ * 오버레이 버튼, 아이템 패널, 드래그 기능
+ */
 
-let currentCategory = null;
-let statusMessageTimeout; // To store the timeout ID for clearing
+export class UIManager {
+    private overlayBtns: NodeListOf<Element> | null = null;
+    private itemPanel: HTMLElement | null = null;
+    private panelHeader: Element | null = null;
+    private itemLists: NodeListOf<Element> | null = null;
+    private statusMessage: HTMLElement | null = null;
+    private currentCategory: string | null = null;
+    private statusMessageTimeout: ReturnType<typeof setTimeout> | null = null;
 
-export function init() {
-    overlayBtns = document.querySelectorAll('.overlay-btn');
-    itemPanel = document.getElementById('item-panel');
-    if (itemPanel) {
-        panelHeader = itemPanel.querySelector('.overlay-item-panel-header');
-        itemLists = itemPanel.querySelectorAll('.item-list');
+    // Drag state
+    private isDragging = false;
+    private startX = 0;
+    private startY = 0;
+    private startLeft = 0;
+    private startTop = 0;
+
+    /**
+     * UI 초기화
+     */
+    init(): void {
+        this.overlayBtns = document.querySelectorAll('.overlay-btn');
+        this.itemPanel = document.getElementById('item-panel');
+        
+        if (this.itemPanel) {
+            this.panelHeader = this.itemPanel.querySelector('.overlay-item-panel-header');
+            this.itemLists = this.itemPanel.querySelectorAll('.item-list');
+        }
+        this.statusMessage = document.getElementById('status-message');
+
+        if (this.overlayBtns) {
+            this.overlayBtns.forEach(btn => {
+                btn.addEventListener('click', () => this.handleButtonClick(btn));
+            });
+        }
+
+        // Close panel when clicking outside
+        document.addEventListener('mousedown', this.handleOutsideClick);
+
+        this.initDrag();
     }
-    statusMessage = document.getElementById('status-message'); // Ensure this element exists in your HTML
 
-    if (overlayBtns) {
-        overlayBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-            const category = btn.dataset.category;
+    /**
+     * 버튼 클릭 핸들러
+     */
+    private handleButtonClick(btn: Element): void {
+        const category = (btn as HTMLElement).dataset.category;
 
-            // Handle special categories (remove, terrain expansion)
-            if (category === 'remove') {
-                displayStatusMessage('Deleting...');
-                // Add your removal logic here
-                toggleOverlayButtonActiveState(btn); // Keep button active/inactive
-                return; // Stop further execution for these buttons
-            } else if (category === 'terrain expansion') {
-                displayStatusMessage('Placing new terrain...');
-                // Add your terrain expansion logic here
-                toggleOverlayButtonActiveState(btn); // Keep button active/inactive
-                return; // Stop further execution for these buttons
+        // Handle special categories (remove, terrain expansion)
+        if (category === 'remove') {
+            this.displayStatusMessage('Deleting...');
+            this.toggleOverlayButtonActiveState(btn);
+            return;
+        } else if (category === 'terrain expansion') {
+            this.displayStatusMessage('Placing new terrain...');
+            this.toggleOverlayButtonActiveState(btn);
+            return;
+        }
+
+        // Normal category button logic
+        if (this.itemPanel?.classList.contains('visible') && this.currentCategory === category) {
+            // Clicking an already active category button to close the panel
+            this.itemPanel.classList.remove('visible');
+            this.overlayBtns?.forEach(b => b.classList.remove('active'));
+            this.currentCategory = null;
+            this.hideStatusMessage();
+        } else {
+            // Opening a new category panel
+            this.overlayBtns?.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (this.panelHeader) {
+                this.panelHeader.textContent = btn.textContent;
             }
 
-            // Normal category button logic
-            if (itemPanel.classList.contains('visible') && currentCategory === category) {
-                // Clicking an already active category button to close the panel
-                itemPanel.classList.remove('visible');
-                overlayBtns.forEach(b => b.classList.remove('active'));
-                currentCategory = null;
-                hideStatusMessage();
-            } else {
-                // Opening a new category panel
-                overlayBtns.forEach(b => b.classList.remove('active')); // Deactivate all
-                btn.classList.add('active'); // Activate current
-                panelHeader.textContent = btn.textContent;
+            this.itemLists?.forEach(list => {
+                (list as HTMLElement).style.display = 
+                    (list as HTMLElement).dataset.category === category ? 'flex' : 'none';
+            });
 
-                itemLists.forEach(list => {
-                    list.style.display = (list.dataset.category === category) ? 'flex' : 'none';
-                });
+            this.itemPanel?.classList.add('visible');
+            this.currentCategory = category || null;
+            this.hideStatusMessage();
+        }
+    }
 
-                itemPanel.classList.add('visible');
-                currentCategory = category;
-                hideStatusMessage(); // Hide any lingering status message
+    /**
+     * 외부 클릭 핸들러 (패널 닫기)
+     */
+    private handleOutsideClick = (e: MouseEvent): void => {
+        const target = e.target as Node;
+        
+        if (this.itemPanel && 
+            !this.itemPanel.contains(target) && 
+            this.overlayBtns && 
+            ![...this.overlayBtns].some(btn => btn.contains(target))) {
+            
+            this.itemPanel.classList.remove('visible');
+            this.overlayBtns.forEach(b => b.classList.remove('active'));
+            this.currentCategory = null;
+            this.hideStatusMessage();
+        }
+    };
+
+    /**
+     * 버튼 활성 상태 토글
+     */
+    private toggleOverlayButtonActiveState(button: Element): void {
+        if (button.classList.contains('active')) {
+            button.classList.remove('active');
+        } else {
+            this.overlayBtns?.forEach(b => b.classList.remove('active'));
+            button.classList.add('active');
+        }
+    }
+
+    /**
+     * 상태 메시지 표시
+     */
+    displayStatusMessage(message: string): void {
+        if (this.statusMessageTimeout) {
+            clearTimeout(this.statusMessageTimeout);
+        }
+        
+        if (this.statusMessage) {
+            this.statusMessage.textContent = message;
+            this.statusMessage.classList.add('visible');
+        }
+
+        this.statusMessageTimeout = setTimeout(() => {
+            this.hideStatusMessage();
+        }, 2000);
+    }
+
+    /**
+     * 상태 메시지 숨기기
+     */
+    hideStatusMessage(): void {
+        if (this.statusMessage) {
+            this.statusMessage.classList.remove('visible');
+            this.statusMessage.textContent = '';
+        }
+    }
+
+    /**
+     * 드래그 기능 초기화
+     */
+    private initDrag(): void {
+        if (this.panelHeader) {
+            this.panelHeader.addEventListener('mousedown', this.handleDragStart);
+        }
+
+        document.addEventListener('mousemove', this.handleDragMove);
+        document.addEventListener('mouseup', this.handleDragEnd);
+    }
+
+    private handleDragStart = (e: Event): void => {
+        const event = e as MouseEvent;
+        this.isDragging = true;
+        this.itemPanel?.classList.add('dragging');
+        
+        const rect = this.itemPanel?.getBoundingClientRect();
+        if (rect) {
+            this.startX = event.clientX;
+            this.startY = event.clientY;
+            this.startLeft = rect.left;
+            this.startTop = rect.top;
+            
+            if (this.itemPanel) {
+                this.itemPanel.style.position = 'fixed';
+                this.itemPanel.style.left = `${rect.left}px`;
+                this.itemPanel.style.top = `${rect.top}px`;
+                this.itemPanel.style.bottom = '';
+                this.itemPanel.style.transform = 'none';
             }
-        });
-    });
-    }
-
-    // Close panel when clicking outside
-    document.addEventListener('mousedown', e => {
-        if (itemPanel && !itemPanel.contains(e.target) && overlayBtns && ![...overlayBtns].some(btn => btn.contains(e.target))) {
-            itemPanel.classList.remove('visible');
-            overlayBtns.forEach(b => b.classList.remove('active'));
-            currentCategory = null;
-            hideStatusMessage();
         }
-    });
+    };
 
-    initDrag();
-}
+    private handleDragMove = (e: MouseEvent): void => {
+        if (!this.isDragging || !this.itemPanel) return;
+        
+        const dx = e.clientX - this.startX;
+        const dy = e.clientY - this.startY;
+        this.itemPanel.style.left = `${this.startLeft + dx}px`;
+        this.itemPanel.style.top = `${this.startTop + dy}px`;
+    };
 
-/**
- * Toggles the 'active' class on a given button.
- * Useful for 'remove' and 'terrain expansion' buttons that don't open the item panel.
- */
-function toggleOverlayButtonActiveState(button) {
-    if (button.classList.contains('active')) {
-        button.classList.remove('active');
-    } else {
-        overlayBtns.forEach(b => b.classList.remove('active')); // Deactivate others
-        button.classList.add('active'); // Activate this one
-    }
-}
-
-/**
- * Displays a temporary status message at the bottom of the screen.
- * @param {string} message - The message to display.
- */
-function displayStatusMessage(message) {
-    clearTimeout(statusMessageTimeout); // Clear any existing timeout
-    statusMessage.textContent = message;
-    statusMessage.classList.add('visible');
-
-    // Hide the message after 2 seconds
-    statusMessageTimeout = setTimeout(() => {
-        hideStatusMessage();
-    }, 2000);
-}
-
-/**
- * Hides the status message.
- */
-function hideStatusMessage() {
-    statusMessage.classList.remove('visible');
-    statusMessage.textContent = ''; // Clear text content
-}
-
-function initDrag() {
-    let isDragging = false, startX, startY, startLeft, startTop;
-
-    if (panelHeader) {
-        panelHeader.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        itemPanel.classList.add('dragging');
-        const rect = itemPanel.getBoundingClientRect();
-        startX = e.clientX;
-        startY = e.clientY;
-        startLeft = rect.left;
-        startTop = rect.top;
-        itemPanel.style.position = 'fixed';
-        itemPanel.style.left = `${rect.left}px`;
-        itemPanel.style.top = `${rect.top}px`;
-        itemPanel.style.bottom = ''; // Clear bottom style for fixed positioning
-        itemPanel.style.transform = 'none'; // Clear transform for fixed positioning
-    });
-    }
-
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        let dx = e.clientX - startX;
-        let dy = e.clientY - startY;
-        itemPanel.style.left = `${startLeft + dx}px`;
-        itemPanel.style.top = `${startTop + dy}px`;
-    });
-
-    document.addEventListener('mouseup', () => {
-        if (isDragging) {
-            isDragging = false;
-            itemPanel.classList.remove('dragging');
+    private handleDragEnd = (): void => {
+        if (this.isDragging) {
+            this.isDragging = false;
+            this.itemPanel?.classList.remove('dragging');
         }
-    });
+    };
+
+    /**
+     * 정리
+     */
+    dispose(): void {
+        document.removeEventListener('mousedown', this.handleOutsideClick);
+        document.removeEventListener('mousemove', this.handleDragMove);
+        document.removeEventListener('mouseup', this.handleDragEnd);
+        
+        if (this.statusMessageTimeout) {
+            clearTimeout(this.statusMessageTimeout);
+        }
+        
+        console.log('[UIManager] Disposed');
+    }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Singleton Instance
+// ═══════════════════════════════════════════════════════════════
+export const uiManager = new UIManager();
+
+// ═══════════════════════════════════════════════════════════════
+// Legacy Exports (호환성 유지)
+// ═══════════════════════════════════════════════════════════════
+export const init = () => uiManager.init();

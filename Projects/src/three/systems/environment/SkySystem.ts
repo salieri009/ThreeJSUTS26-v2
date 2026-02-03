@@ -1,26 +1,23 @@
 ﻿// @ts-nocheck
-import * as env from '../../environment';
+import { environmentManager } from '../../environment';
 
 export class SkySystem {
-  init() {
-    env.setBackground();
-    env.loadClouds?.(1);
+  init(): void {
+    environmentManager.setBackground();
+    environmentManager.loadClouds();
   }
 
-  update(dt) {
-    env.cloudMove();
-    env.updateMoon(dt);
-    env.updateAurora();
+  update(dt: number): void {
+    environmentManager.cloudMove();
+    environmentManager.updateMoon(dt);
+    environmentManager.updateAurora();
     // Season particle updates (safe no-ops if effect not created)
-    env.updateSpringEffect();
-    env.updateSummerEffect(dt);
-    env.updateAutumnEffect();
+    environmentManager.updateSpringEffect();
+    environmentManager.updateSummerEffect(dt);
+    environmentManager.updateAutumnEffect();
   }
 
-  dispose() {
-    env.removeAuroraEffect?.();
+  dispose(): void {
+    environmentManager.removeAuroraEffect?.();
   }
 }
-
-
-
