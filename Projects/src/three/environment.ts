@@ -8,12 +8,7 @@ import { emit } from './core/eventBus';
 // ──────────────────────────────────────────────
 // Aurora shaders (ported from scripts/environment.js)
 // ──────────────────────────────────────────────
-const auroraVertexShader = `
-varying vec3 vWorldPos;
-varying float vIntensity;
-uniform vec3 auroraParams;
-uniform float time;
-uniform float randSeed;
+const SNOISE_GLSL = `
 vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
 vec4 mod289(vec4 x){return x-floor(x*(1.0/289.0))*289.0;}
 vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
@@ -56,86 +51,67 @@ float snoise(vec3 v){
   vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);
   m=m*m;
   return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
-}
+}`;
+
+const auroraVertexShader = SNOISE_GLSL + `
+varying vec3 vWorldPos;
+varying float vIntensity;
+varying float vNormalY;
+uniform vec3 auroraParams;  // x=noiseScale, y=speed, z=amplitude
+uniform float time;
+uniform float randSeed;
 void main(){
   vec3 pos=position;
+  // Plane is 1000 wide x 450 tall, centered at origin
+  float normalY=clamp((pos.y+225.0)/450.0,0.0,1.0);
+  // Bell-curve height envelope — peak in lower-middle, tapers at edges
+  float hEnv=smoothstep(0.0,0.22,normalY)*(1.0-smoothstep(0.5,1.0,normalY));
+  hEnv=hEnv*hEnv*1.6;
   float t=time*auroraParams.y+randSeed;
-  vec3 nc1=pos*auroraParams.x+vec3(t*0.3,0.0,0.0);
-  vec3 nc2=pos*(auroraParams.x*2.7)+vec3(0.0,t*0.7,0.0);
-  vec3 nc3=pos*(auroraParams.x*5.2)+vec3(t*1.2,t*0.5,0.0);
-  float n1=snoise(nc1)*0.8;
-  float n2=snoise(nc2)*0.5;
-  float n3=snoise(nc3)*0.3;
-  float vw=smoothstep(0.3,0.7,pos.y)*2.0;
-  pos.z+=(n1+n2+n3)*auroraParams.z*vw;
-  pos.x+=sin(pos.z*0.1+t*2.0)*0.3;
+  // 4 octaves: broad waves → medium ripples → fine detail → micro shimmer
+  vec3 nc1=pos*auroraParams.x          +vec3(t*0.14,0.0,0.0);
+  vec3 nc2=pos*(auroraParams.x*3.2)    +vec3(0.0,t*0.55,t*0.08);
+  vec3 nc3=pos*(auroraParams.x*8.5)    +vec3(t*0.85,t*0.38,0.0);
+  vec3 nc4=pos*(auroraParams.x*20.0)   +vec3(t*2.2,t*1.6,t*0.5);
+  float n1=snoise(nc1)*0.62;
+  float n2=snoise(nc2)*0.28;
+  float n3=snoise(nc3)*0.12;
+  float n4=snoise(nc4)*0.05;
+  float totalN=n1+n2+n3+n4;
+  // Curtain displacement (Z-axis)
+  pos.z+=totalN*auroraParams.z*hEnv;
+  // Fold/drape — adds vertical streaks
+  pos.x+=sin(totalN*4.0+t*1.1)*auroraParams.z*0.055*hEnv;
+  // Subtle Y waviness for organic look
+  pos.y+=sin(pos.x*0.004+t*0.7)*10.0*hEnv;
   vWorldPos=(modelMatrix*vec4(pos,1.0)).xyz;
-  vIntensity=vw*(n1*0.6+n2*0.3+n3*0.1);
+  vNormalY=normalY;
+  float nMag=abs(n1)*0.5+abs(n2)*0.3+abs(n3)*0.15+abs(n4)*0.05;
+  vIntensity=hEnv*nMag*2.5;
   gl_Position=projectionMatrix*modelViewMatrix*vec4(pos,1.0);
 }`;
 
 const auroraFragmentShader = `
 varying vec3 vWorldPos;
 varying float vIntensity;
+varying float vNormalY;
 uniform vec3 color1;
 uniform vec3 color2;
 uniform vec3 color3;
+uniform vec3 color4;
 uniform float time;
-vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
-vec4 mod289(vec4 x){return x-floor(x*(1.0/289.0))*289.0;}
-vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
-vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}
-float snoise(vec3 v){
-  const vec2 C=vec2(1.0/6.0,1.0/3.0);
-  const vec4 D=vec4(0.0,0.5,1.0,2.0);
-  vec3 i=floor(v+dot(v,C.yyy));
-  vec3 x0=v-i+dot(i,C.xxx);
-  vec3 g=step(x0.yzx,x0.xyz);
-  vec3 l=1.0-g;
-  vec3 i1=min(g.xyz,l.zxy);
-  vec3 i2=max(g.xyz,l.zxy);
-  vec3 x1=x0-i1+C.xxx;
-  vec3 x2=x0-i2+C.yyy;
-  vec3 x3=x0-D.yyy;
-  i=mod289(i);
-  vec4 p=permute(permute(permute(i.z+vec4(0.0,i1.z,i2.z,1.0))+i.y+vec4(0.0,i1.y,i2.y,1.0))+i.x+vec4(0.0,i1.x,i2.x,1.0));
-  float n_=0.142857142857;
-  vec3 ns=n_*D.wyz-D.xzx;
-  vec4 j=p-49.0*floor(p*ns.z*ns.z);
-  vec4 x_=floor(j*ns.z);
-  vec4 y_=floor(j-7.0*x_);
-  vec4 x=x_*ns.x+ns.yyyy;
-  vec4 y=y_*ns.x+ns.yyyy;
-  vec4 h=1.0-abs(x)-abs(y);
-  vec4 b0=vec4(x.xy,y.xy);
-  vec4 b1=vec4(x.zw,y.zw);
-  vec4 s0=floor(b0)*2.0+1.0;
-  vec4 s1=floor(b1)*2.0+1.0;
-  vec4 sh=-step(h,vec4(0.0));
-  vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;
-  vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
-  vec3 p0=vec3(a0.xy,h.x);
-  vec3 p1=vec3(a0.zw,h.y);
-  vec3 p2=vec3(a1.xy,h.z);
-  vec3 p3=vec3(a1.zw,h.w);
-  vec4 norm=taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
-  p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
-  vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);
-  m=m*m;
-  return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
-}
 void main(){
-  float hf=smoothstep(0.0,1.0,vWorldPos.y/100.0);
-  vec3 base=mix(color1,color2,hf);
-  float pulse=sin(time*2.0+vWorldPos.x*0.1)*0.3+0.7;
-  float n1=snoise(vec3(vWorldPos.x*0.05,vWorldPos.y*0.05,time*0.3));
-  float n2=snoise(vec3(vWorldPos.x*0.1,vWorldPos.y*0.1,time*0.5));
-  vec3 fc=mix(base,color3,n1*0.5);
-  fc=mix(fc,vec3(0.5,1.0,0.8),n2*0.3);
-  float ef=smoothstep(0.3,0.7,1.0-length(vWorldPos.xz*0.01));
-  float alpha=vIntensity*pulse*ef;
-  alpha*=smoothstep(0.2,0.8,1.0-abs(vWorldPos.x*0.01));
-  gl_FragColor=vec4(fc*1.2,alpha*0.9);
+  vec3 col=color1;
+  col=mix(col,color2,smoothstep(0.1,0.4,vNormalY));
+  col=mix(col,color3,smoothstep(0.4,0.7,vNormalY));
+  col=mix(col,color4,smoothstep(0.7,1.0,vNormalY));
+  float core=pow(vIntensity,2.0)*1.8;
+  col+=vec3(0.3,0.6,0.4)*core;
+  float xFade=1.0-smoothstep(0.55,1.0,abs(vWorldPos.x)/500.0);
+  float hFade=smoothstep(0.0,0.1,vNormalY)*(1.0-smoothstep(0.85,1.0,vNormalY));
+  float alpha=vIntensity*hFade*xFade*1.4;
+  alpha=clamp(alpha,0.0,0.85);
+  gl_FragColor=vec4(col,alpha);
 }`;
 
 export class EnvironmentManager {
@@ -428,14 +404,24 @@ export class EnvironmentManager {
     private createAurora(): void {
         if (!this.weather.night) return;
         this.removeAuroraEffect();
-        const layerSettings = Array.from({ length: 5 }, () => ({
-            amplitude: THREE.MathUtils.randFloat(3.0, 3.0),
-            frequency: THREE.MathUtils.randFloat(1, 5.0),
-            speed: THREE.MathUtils.randFloat(0.001, 0.02),
-            color1: new THREE.Color().setHSL(THREE.MathUtils.randFloat(0.5, 0.7), 0.8, 0.6),
-            color2: new THREE.Color().setHSL(THREE.MathUtils.randFloat(0.3, 0.5), 0.8, 0.6),
-            color3: new THREE.Color().setHSL(THREE.MathUtils.randFloat(0.4, 0.6), 0.9, 0.7),
-        }));
+        const PALETTE = [
+            { h: 0.33, s: 1.0, l: 0.55 },
+            { h: 0.49, s: 0.9, l: 0.60 },
+            { h: 0.67, s: 0.8, l: 0.65 },
+            { h: 0.75, s: 0.9, l: 0.65 },
+            { h: 0.88, s: 0.8, l: 0.70 },
+        ];
+        const layerSettings = Array.from({ length: 7 }, (_, i) => {
+            const base = i % (PALETTE.length - 1);
+            const c = (idx: number) => new THREE.Color().setHSL(PALETTE[idx].h, PALETTE[idx].s, PALETTE[idx].l);
+            return {
+                speed: THREE.MathUtils.randFloat(0.008, 0.025),
+                color1: c(base),
+                color2: c(base + 1),
+                color3: c(Math.min(base + 2, PALETTE.length - 1)),
+                color4: new THREE.Color().setHSL(0.88, 0.6, 0.85),
+            };
+        });
         layerSettings.forEach((s, i) => {
             const layer = this.createAuroraLayer(s, i);
             this.auroraLayers.push(layer);
@@ -444,7 +430,7 @@ export class EnvironmentManager {
     }
 
     private createAuroraLayer(s: any, idx: number): THREE.Group {
-        const geometry = new THREE.PlaneGeometry(800, 350, 256, 256);
+        const geometry = new THREE.PlaneGeometry(1000, 450, 256, 128);
         const pivot = new THREE.Group();
         pivot.rotation.set(
             THREE.MathUtils.randFloatSpread(Math.PI / 8),
@@ -453,7 +439,7 @@ export class EnvironmentManager {
         );
         pivot.position.set(
             THREE.MathUtils.randFloatSpread(200),
-            THREE.MathUtils.randFloat(80, 100),
+            THREE.MathUtils.randFloat(120, 160),
             THREE.MathUtils.randFloatSpread(200),
         );
         const material = new THREE.ShaderMaterial({
@@ -463,6 +449,7 @@ export class EnvironmentManager {
                 color1: { value: s.color1 },
                 color2: { value: s.color2 },
                 color3: { value: s.color3 },
+                color4: { value: s.color4 },
                 randSeed: { value: Math.random() * 100 },
             },
             vertexShader: auroraVertexShader,
@@ -487,12 +474,9 @@ export class EnvironmentManager {
             mat.uniforms.time.value = t;
             mat.uniforms.auroraParams.value.set(
                 0.1 + Math.sin(t * 0.1) * 0.1,
-                0.5 + i * 0.005,
-                10 + Math.cos(t * 0.2) * 10.3,
+                0.28 + i * 0.04,
+                45 + Math.sin(t * 0.15 + i * 0.8) * 20,
             );
-            if (Math.random() < 0.02) {
-                mat.uniforms.color3.value.setHSL(Math.random() * 0.2 + 0.5, 0.8, Math.random() * 0.2 + 0.6);
-            }
         });
     }
 

@@ -174,6 +174,7 @@ export class InteractionManager {
 
             // 보호 대상이 아니면 삭제
             if (!this.PROTECTED_OBJECTS.has(root.name)) {
+                modelManager.freeObjectCells(root);
                 this.disposeObject(root);
                 scene.remove(root);
                 this.isRemoving = false;
