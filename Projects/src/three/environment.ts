@@ -1,6 +1,7 @@
 // @ts-nocheck
 import * as THREE from 'three';
 import { sceneManager } from './core/sceneManager';
+import { modelManager } from './gridModels';
 import { CONFIG } from './core/CONFIG';
 import { emit } from './core/eventBus';
 

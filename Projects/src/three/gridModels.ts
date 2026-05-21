@@ -11,6 +11,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { sceneManager } from './core/sceneManager';
 import { CONFIG } from './core/CONFIG';
 import { on, type SeasonType } from './core/eventBus';
+import { getTerrainHeight } from './utils/noise';
 
 export class ModelManager {
     // ═══════════════════════════════════════════════════════════════
@@ -112,7 +113,6 @@ export class ModelManager {
      */
     loadScene(): void {
         const scene = sceneManager.scene;
-        const { getTerrainHeight } = require('./utils/noise');
 
         // 초기 3x3 그리드 생성
         const initialSize = 3;
