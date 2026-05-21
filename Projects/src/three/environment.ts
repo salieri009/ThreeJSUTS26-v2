@@ -1,8 +1,8 @@
 // @ts-nocheck
 import * as THREE from 'three';
 import { sceneManager } from './core/sceneManager';
-import { modelManager } from './gridModels';
 import { CONFIG } from './core/CONFIG';
+import { emit } from './core/eventBus';
 
 // ──────────────────────────────────────────────
 // Aurora shaders (ported from scripts/environment.js)
@@ -316,31 +316,18 @@ export class EnvironmentManager {
                 break;
         }
         this.updateSky();
+        emit('weather:change', type);
     }
 
     setSeason(season: 'spring' | 'summer' | 'autumn' | 'winter'): void {
         this.currentSeason = season;
 
-        // grass colours
-        const grassColors: Record<string, number> = {
-            spring: CONFIG.COLORS.GRASS_SPRING,
-            summer: CONFIG.COLORS.GRASS_SUMMER,
-            autumn: CONFIG.COLORS.GRASS_AUTUMN,
-            winter: CONFIG.COLORS.GRASS_WINTER,
-        };
         const skyColors: Record<string, number> = {
             spring: CONFIG.COLORS.SKY_SPRING,
             summer: CONFIG.COLORS.SKY_SUMMER,
             autumn: CONFIG.COLORS.SKY_AUTUMN,
             winter: CONFIG.COLORS.SKY_WINTER,
         };
-        const grassColor = grassColors[season] ?? CONFIG.COLORS.GRASS;
-        if (modelManager.grasses?.length > 0) {
-            modelManager.grasses.forEach((grass) => {
-                const mat = grass.material as THREE.MeshPhongMaterial;
-                if (mat?.color) { mat.color.setHex(grassColor); mat.needsUpdate = true; }
-            });
-        }
         if (!this.weather.night && this.skyMaterial) {
             this.skyMaterial.color.setHex(skyColors[season] ?? CONFIG.COLORS.SKY_SUNNY);
             this.skyMaterial.needsUpdate = true;
@@ -360,6 +347,9 @@ export class EnvironmentManager {
                 if (this.weather.night) this.createAurora();
                 break;
         }
+
+        // grass colours are handled by modelManager via eventBus
+        emit('season:change', season);
     }
 
     setNightMode(): void {
@@ -367,6 +357,7 @@ export class EnvironmentManager {
         this.updateSky();
         this.createMoon();
         if (this.currentSeason === 'winter') this.createAurora();
+        emit('time:change', 'night');
     }
 
     setDayMode(): void {
@@ -374,6 +365,7 @@ export class EnvironmentManager {
         this.updateSky();
         this.removeMoon();
         this.removeAuroraEffect();
+        emit('time:change', 'day');
     }
 
     // ──────────────────────────────────────────────────────────────

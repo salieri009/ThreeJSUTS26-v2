@@ -1,16 +1,40 @@
 import { useEffect, useState } from 'react';
 import { init as initThreeJS } from './three/main';
-import { spawnObject, addBlock, deleteModel, setWeather } from './three/buttonInteract';
+import { spawnObject, addBlock, deleteModel } from './three/buttonInteract';
+import { environmentManager } from './three/environment';
+import { seasonSyncManager } from './three/seasonSyncUtil';
+import { on, type WeatherType, type TimeType } from './three/core/eventBus';
 
 function App() {
   const [activeCategory, setActiveCategory] = useState<'ANIMALS' | 'NATURE' | 'PROPS' | 'BLDG'>('ANIMALS');
   const [time, setTime] = useState(new Date());
+  const [currentWeather, setCurrentWeather] = useState<WeatherType>('sunny');
+  const [timeMode, setTimeMode] = useState<TimeType>('day');
 
   useEffect(() => {
     initThreeJS();
     const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    const unsubWeather = on('weather:change', setCurrentWeather);
+    const unsubTime = on('time:change', setTimeMode);
+    return () => {
+      clearInterval(timer);
+      unsubWeather();
+      unsubTime();
+    };
   }, []);
+
+  const handleWeather = (type: WeatherType) => {
+    seasonSyncManager.notifyManualWeatherChange();
+    environmentManager.setWeather(type);
+  };
+
+  const handleTimeToggle = () => {
+    if (timeMode === 'night') {
+      environmentManager.setDayMode();
+    } else {
+      environmentManager.setNightMode();
+    }
+  };
 
   const styles = {
     container: {
@@ -50,9 +74,9 @@ function App() {
         justifyContent: 'space-between',
         marginBottom: '10px'
     },
-    weatherBtn: {
-        background: 'rgba(255,255,255,0.1)',
-        border: 'none',
+    weatherBtn: (active: boolean) => ({
+        background: active ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.1)',
+        border: active ? '1px solid rgba(255,255,255,0.6)' : 'none',
         borderRadius: '10px',
         padding: '10px',
         cursor: 'pointer',
@@ -60,7 +84,7 @@ function App() {
         flex: 1,
         margin: '0 5px',
         textAlign: 'center' as const
-    },
+    }),
     sectionTitle: {
         fontSize: '12px',
         fontWeight: 'bold',
@@ -224,10 +248,10 @@ function App() {
             {/* Weather & Time Panel */}
             <div style={styles.glassPanel}>
                  <div style={styles.weatherRow}>
-                    <button style={styles.weatherBtn} onClick={() => setWeather('sunny')}>☀️</button>
-                    <button style={styles.weatherBtn} onClick={() => setWeather('cloudy')}>☁️</button>
-                    <button style={styles.weatherBtn} onClick={() => setWeather('rainy')}>🌧️</button>
-                    <button style={styles.weatherBtn} onClick={() => setWeather('night')}>🌙</button>
+                    <button style={styles.weatherBtn(currentWeather === 'sunny' && timeMode === 'day')} onClick={() => handleWeather('sunny')}>☀️</button>
+                    <button style={styles.weatherBtn(currentWeather === 'cloudy')} onClick={() => handleWeather('cloudy')}>☁️</button>
+                    <button style={styles.weatherBtn(currentWeather === 'rainy')} onClick={() => handleWeather('rainy')}>🌧️</button>
+                    <button style={styles.weatherBtn(timeMode === 'night')} onClick={handleTimeToggle}>🌙</button>
                  </div>
                 
                 <div style={styles.header}>

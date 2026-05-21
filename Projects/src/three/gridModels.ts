@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { sceneManager } from './core/sceneManager';
 import { CONFIG } from './core/CONFIG';
+import { on, type SeasonType } from './core/eventBus';
 
 export class ModelManager {
     // ═══════════════════════════════════════════════════════════════
@@ -83,6 +84,24 @@ export class ModelManager {
     private textureLoad = new THREE.TextureLoader();
     private mixers: THREE.AnimationMixer[] = [];
     private clock = new THREE.Clock();
+
+    constructor() {
+        on('season:change', (season: SeasonType) => this.updateGrassColors(season));
+    }
+
+    private updateGrassColors(season: SeasonType): void {
+        const grassColors: Record<SeasonType, number> = {
+            spring: CONFIG.COLORS.GRASS_SPRING,
+            summer: CONFIG.COLORS.GRASS_SUMMER,
+            autumn: CONFIG.COLORS.GRASS_AUTUMN,
+            winter: CONFIG.COLORS.GRASS_WINTER,
+        };
+        const color = grassColors[season] ?? CONFIG.COLORS.GRASS;
+        this.grasses.forEach((grass) => {
+            const mat = grass.material as THREE.MeshPhongMaterial;
+            if (mat?.color) { mat.color.setHex(color); mat.needsUpdate = true; }
+        });
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // 초기화 함수

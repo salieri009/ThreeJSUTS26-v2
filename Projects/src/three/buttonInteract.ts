@@ -10,7 +10,6 @@ import * as THREE from 'three';
 import { sceneManager } from './core/sceneManager';
 import { CONFIG } from './core/CONFIG';
 import { modelManager } from './gridModels';
-import { environmentManager } from './environment';
 
 export class InteractionManager {
     // ═══════════════════════════════════════════════════════════════
@@ -245,35 +244,6 @@ export class InteractionManager {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // 날씨 제어 (레거시 호환)
-    // ═══════════════════════════════════════════════════════════════
-
-    /**
-     * 날씨 설정
-     * @deprecated environmentManager.setWeather() 사용 권장
-     */
-    setWeather(type: string): void {
-        switch (type) {
-            case 'sunny':
-                environmentManager.weather.cloudy = false;
-                environmentManager.weather.night = false;
-                break;
-            case 'cloudy':
-                environmentManager.weather.cloudy = true;
-                environmentManager.weather.night = false;
-                break;
-            case 'rainy':
-                environmentManager.weather.cloudy = true;
-                environmentManager.weather.night = false;
-                break;
-            case 'night':
-                environmentManager.weather.cloudy = false;
-                environmentManager.weather.night = true;
-                break;
-        }
-        environmentManager.updateSky();
-    }
-
     // ═══════════════════════════════════════════════════════════════
     // Cleanup & Dispose
     // ═══════════════════════════════════════════════════════════════
@@ -302,5 +272,4 @@ export const interactionManager = new InteractionManager();
 export const addBlock = () => interactionManager.addBlock();
 export const deleteModel = () => interactionManager.deleteModel();
 export const spawnObject = (type: string) => interactionManager.spawnObject(type);
-export const setWeather = (type: string) => interactionManager.setWeather(type);
 export const dispose = () => interactionManager.dispose();
