@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { sceneManager } from './core/sceneManager';
 import { CONFIG } from './core/CONFIG';
 import { modelManager } from './gridModels';
+import { getTerrainHeight } from './utils/noise';
 
 export class InteractionManager {
     // ═══════════════════════════════════════════════════════════════
@@ -63,7 +64,6 @@ export class InteractionManager {
      */
     addBlock(): void {
         const scene = sceneManager.scene;
-        const { getTerrainHeight } = require('./utils/noise');
         
         // 기존 그리드 제거
         if (modelManager.grid) scene.remove(modelManager.grid);
