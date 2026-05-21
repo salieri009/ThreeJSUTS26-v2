@@ -79,13 +79,14 @@ export const CONFIG = {
     // 환경 설정
     // ─────────────────────────────────────────
     ENVIRONMENT: {
-        CLOUD_COUNT: 11,
+        CLOUD_COUNT: 10,
         CLOUD_MIN_SCALE: 0.1,
         CLOUD_MAX_SCALE: 0.25,
-        CLOUD_MIN_SPEED: 1.4,
-        CLOUD_MAX_SPEED: 2.4,
-        CLOUD_RESET_X: -100,
-        CLOUD_MAX_X: 60,
+        CLOUD_MIN_SPEED: 0.5,
+        CLOUD_MAX_SPEED: 1.0,
+        CLOUD_SPAWN_START_X: -200,
+        CLOUD_MAX_X: 500,
+        CLOUD_SPAWN_INTERVAL: 5,
         SKY_RADIUS: 200,
     },
 

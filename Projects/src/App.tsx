@@ -1,89 +1,15 @@
 import { useEffect, useState } from 'react';
-import { initWorld } from './three/World';
+import { init as initThreeJS } from './three/main';
 import { spawnObject, addBlock, deleteModel, setWeather } from './three/buttonInteract';
-import { environmentManager } from './three/environment';
 
 function App() {
   const [activeCategory, setActiveCategory] = useState<'ANIMALS' | 'NATURE' | 'PROPS' | 'BLDG'>('ANIMALS');
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
-    initWorld();
-    
+    initThreeJS();
     const timer = setInterval(() => setTime(new Date()), 1000);
-    
-    // 키보드 이벤트 핸들러
-    const handleKeyDown = (event: KeyboardEvent) => {
-      switch(event.key) {
-        // 계절 변경 (1, 2, 3, 4)
-        case '1':
-          environmentManager.setSeason('spring');
-          console.log('🌸 Spring');
-          break;
-        case '2':
-          environmentManager.setSeason('summer');
-          console.log('☀️ Summer');
-          break;
-        case '3':
-          environmentManager.setSeason('autumn');
-          console.log('🍂 Autumn');
-          break;
-        case '4':
-          environmentManager.setSeason('winter');
-          console.log('❄️ Winter');
-          break;
-        // 날씨 변경 (q, w, e, r, t)
-        case 'q':
-        case 'Q':
-          environmentManager.setWeather('sunny');
-          console.log('☀️ Sunny');
-          break;
-        case 'w':
-        case 'W':
-          environmentManager.setWeather('cloudy');
-          console.log('☁️ Cloudy');
-          break;
-        case 'e':
-        case 'E':
-          environmentManager.setWeather('rainy');
-          console.log('🌧️ Rainy');
-          break;
-        case 'r':
-        case 'R':
-          // 'r' 키가 회전에도 사용되므로 gridModels에서 처리됨
-          // 여기서는 무시
-          break;
-        case 't':
-        case 'T':
-          environmentManager.setWeather('stormy');
-          console.log('⛈️ Stormy');
-          break;
-        // 시간 변경 (n, d)
-        case 'n':
-        case 'N':
-          environmentManager.setNightMode();
-          console.log('🌙 Night');
-          break;
-        case 'd':
-        case 'D':
-          environmentManager.setDayMode();
-          console.log('🌞 Day');
-          break;
-        // 지형 확장 (Space)
-        case ' ':
-          event.preventDefault();
-          addBlock();
-          console.log('🏗️ Terrain expanded');
-          break;
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      clearInterval(timer);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => clearInterval(timer);
   }, []);
 
   const styles = {

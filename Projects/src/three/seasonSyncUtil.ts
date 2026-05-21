@@ -9,8 +9,8 @@
 import { environmentManager } from './environment';
 
 export class SeasonSyncManager {
-    // API 설정
-    private readonly API_KEY = '345a78d07f356c5ddf8042e295cfc2';
+    // API 설정 (환경변수에서 로드)
+    private readonly API_KEY = import.meta.env.VITE_OPENWEATHER_KEY ?? '';
 
     // 현재 상태
     private currentDate = new Date();
@@ -18,6 +18,10 @@ export class SeasonSyncManager {
     private clockInterval: ReturnType<typeof setInterval> | null = null;
     private seasonInterval: ReturnType<typeof setInterval> | null = null;
     private weatherInterval: ReturnType<typeof setInterval> | null = null;
+
+    // 사용자가 수동으로 날씨를 변경했는지 추적
+    private isManualOverride = false;
+    private manualOverrideTimeout: ReturnType<typeof setTimeout> | null = null;
 
     // ═══════════════════════════════════════════════════════════════
     // 초기화
@@ -115,7 +119,19 @@ export class SeasonSyncManager {
         }
     }
 
+    // 사용자가 수동으로 날씨를 변경했음을 알림 (30분간 API 자동 적용 억제)
+    notifyManualWeatherChange(): void {
+        this.isManualOverride = true;
+        if (this.manualOverrideTimeout) clearTimeout(this.manualOverrideTimeout);
+        this.manualOverrideTimeout = setTimeout(() => {
+            this.isManualOverride = false;
+        }, 30 * 60 * 1000);
+    }
+
     private syncWeatherToScene(weatherMain?: string): void {
+        // 사용자가 수동으로 날씨를 변경한 경우 API 자동 적용 건너뜀
+        if (this.isManualOverride) return;
+
         switch (weatherMain) {
             case 'Clear':
                 environmentManager.setWeather('sunny');
@@ -136,8 +152,8 @@ export class SeasonSyncManager {
                 environmentManager.setWeather('stormy');
                 break;
             default:
-                try { 
-                    environmentManager.setWeather('sunny'); 
+                try {
+                    environmentManager.setWeather('sunny');
                 } catch(e) {
                     setTimeout(() => environmentManager.setWeather('sunny'), 100);
                 }
@@ -288,6 +304,7 @@ export class SeasonSyncManager {
         if (this.clockInterval) clearInterval(this.clockInterval);
         if (this.seasonInterval) clearInterval(this.seasonInterval);
         if (this.weatherInterval) clearInterval(this.weatherInterval);
+        if (this.manualOverrideTimeout) clearTimeout(this.manualOverrideTimeout);
         console.log('[SeasonSyncManager] Disposed');
     }
 }
