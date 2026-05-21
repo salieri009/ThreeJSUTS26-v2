@@ -130,7 +130,7 @@ export class ModelManager {
                     );
                     dirt.position.set(
                         -i * CONFIG.BLOCK_SIZE,
-                        h * 2 - 4,
+                        h * 2,
                         -j * CONFIG.BLOCK_SIZE
                     );
                     dirt.name = "Dirt";
@@ -623,11 +623,18 @@ export class ModelManager {
                 const gridX = Math.round(point.x / gridSize) * gridSize;
                 const gridZ = Math.round(point.z / gridSize) * gridSize;
 
-                let y = CONFIG.HEIGHTS.GRASS_TOP;
-                if (this.selectedObject.name === "Fence" || this.selectedObject.name === "Barn") {
-                    y = CONFIG.HEIGHTS.FENCE;
+                // Use raycaster hit Y as the actual surface — works on both flat and raised tiles.
+                // CONFIG height constants are offsets relative to GRASS_TOP on flat ground.
+                const surfaceY = point.y;
+                let y: number;
+                if (this.selectedObject.name === "Barn") {
+                    y = surfaceY + (CONFIG.HEIGHTS.BARN  - CONFIG.HEIGHTS.GRASS_TOP);  // +2.5
+                } else if (this.selectedObject.name === "Fence") {
+                    y = surfaceY + (CONFIG.HEIGHTS.FENCE - CONFIG.HEIGHTS.GRASS_TOP);  // +1.0
                 } else if (this.selectedObject.name === "Path") {
-                    y = CONFIG.HEIGHTS.PATH;
+                    y = surfaceY + (CONFIG.HEIGHTS.PATH  - CONFIG.HEIGHTS.GRASS_TOP);  // -0.9
+                } else {
+                    y = surfaceY;
                 }
 
                 const offsetX = this.selectedSize.width === 2 ? -0.5 : 0;

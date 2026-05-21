@@ -34,6 +34,15 @@ export class InteractionManager {
 
     constructor() {
         this.initSpawnConfig();
+        // Pre-populate with the initial 3×3 terrain created by loadScene()
+        // Must match gridModels.ts loadScene() initialSize=3
+        const initialSize = 3;
+        for (let i = 0; i < initialSize; i++) {
+            for (let j = 0; j < initialSize; j++) {
+                this.existingBlocks.add(`${i},${j}`);
+            }
+        }
+        this.level = initialSize;
     }
 
     private initSpawnConfig(): void {
@@ -95,8 +104,8 @@ export class InteractionManager {
                         new THREE.MeshPhongMaterial({ color: CONFIG.COLORS.DIRT })
                     );
                     dirt.position.set(
-                        -i * CONFIG.BLOCK_SIZE, 
-                        h * 2 - 4, // 블록 높이
+                        -i * CONFIG.BLOCK_SIZE,
+                        h * 2,
                         -j * CONFIG.BLOCK_SIZE
                     );
                     dirt.name = "Dirt";
