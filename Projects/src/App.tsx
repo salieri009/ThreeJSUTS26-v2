@@ -3,29 +3,36 @@ import { init as initThreeJS } from './three/main';
 import { spawnObject, addBlock, deleteModel } from './three/buttonInteract';
 import { environmentManager } from './three/environment';
 import { seasonSyncManager } from './three/seasonSyncUtil';
-import { on, type WeatherType, type TimeType } from './three/core/eventBus';
+import { on, type WeatherType, type TimeType, type SeasonType } from './three/core/eventBus';
 
 function App() {
   const [activeCategory, setActiveCategory] = useState<'ANIMALS' | 'NATURE' | 'PROPS' | 'BLDG'>('ANIMALS');
   const [time, setTime] = useState(new Date());
   const [currentWeather, setCurrentWeather] = useState<WeatherType>('sunny');
   const [timeMode, setTimeMode] = useState<TimeType>('day');
+  const [currentSeason, setCurrentSeason] = useState<SeasonType>('spring');
 
   useEffect(() => {
     initThreeJS();
     const timer = setInterval(() => setTime(new Date()), 1000);
     const unsubWeather = on('weather:change', setCurrentWeather);
     const unsubTime = on('time:change', setTimeMode);
+    const unsubSeason = on('season:change', setCurrentSeason);
     return () => {
       clearInterval(timer);
       unsubWeather();
       unsubTime();
+      unsubSeason();
     };
   }, []);
 
   const handleWeather = (type: WeatherType) => {
     seasonSyncManager.notifyManualWeatherChange();
     environmentManager.setWeather(type);
+  };
+
+  const handleSeason = (season: SeasonType) => {
+    environmentManager.setSeason(season);
   };
 
   const handleTimeToggle = () => {
@@ -150,7 +157,25 @@ function App() {
         color: 'white',
         cursor: 'pointer',
         fontWeight: '600'
-    }
+    },
+    seasonRow: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        marginBottom: '10px',
+        gap: '5px',
+    },
+    seasonBtn: (active: boolean, color: string) => ({
+        background: active ? color : 'rgba(255,255,255,0.1)',
+        border: active ? '1px solid rgba(255,255,255,0.5)' : 'none',
+        borderRadius: '10px',
+        padding: '8px 4px',
+        cursor: 'pointer',
+        color: 'white',
+        flex: 1,
+        textAlign: 'center' as const,
+        fontSize: '18px',
+        lineHeight: 1.2,
+    }),
   };
 
   const renderGridItems = () => {
@@ -252,6 +277,12 @@ function App() {
                     <button style={styles.weatherBtn(currentWeather === 'cloudy')} onClick={() => handleWeather('cloudy')}>☁️</button>
                     <button style={styles.weatherBtn(currentWeather === 'rainy')} onClick={() => handleWeather('rainy')}>🌧️</button>
                     <button style={styles.weatherBtn(timeMode === 'night')} onClick={handleTimeToggle}>🌙</button>
+                 </div>
+                 <div style={styles.seasonRow}>
+                    <button style={styles.seasonBtn(currentSeason === 'spring', 'rgba(255,150,180,0.45)')} onClick={() => handleSeason('spring')}>🌸</button>
+                    <button style={styles.seasonBtn(currentSeason === 'summer', 'rgba(100,200,80,0.45)')}  onClick={() => handleSeason('summer')}>🌻</button>
+                    <button style={styles.seasonBtn(currentSeason === 'autumn', 'rgba(220,120,40,0.45)')} onClick={() => handleSeason('autumn')}>🍂</button>
+                    <button style={styles.seasonBtn(currentSeason === 'winter', 'rgba(100,180,255,0.45)')} onClick={() => handleSeason('winter')}>❄️</button>
                  </div>
                 
                 <div style={styles.header}>
