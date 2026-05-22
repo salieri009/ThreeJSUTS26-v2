@@ -6,7 +6,6 @@
  */
 
 import { sceneManager } from './core/sceneManager';
-import { uiManager } from './UIManager';
 import { seasonSyncManager } from './seasonSyncUtil';
 import { environmentManager } from './environment';
 import { app } from './core/app';
@@ -38,10 +37,7 @@ async function init(): Promise<void> {
             bus.register(new PlacementSystem());
         });
 
-        // 2. UI 시스템 초기화
-        uiManager.init();
-        
-        // 3. 계절/날씨 시스템 초기화
+        // 2. 계절/날씨 시스템 초기화
         seasonSyncManager.init();
 
         // 4. 기타 이벤트 리스너 설정
@@ -84,20 +80,25 @@ function onKeyDown(event: KeyboardEvent): void {
         case '4':
             environmentManager.setSeason('winter');
             break;
-        // 날씨 변경
+        // 날씨 변경 (수동 입력 → API 자동 적용 30분 억제)
         case 'q':
+            seasonSyncManager.notifyManualWeatherChange();
             environmentManager.setWeather('sunny');
             break;
         case 'w':
+            seasonSyncManager.notifyManualWeatherChange();
             environmentManager.setWeather('cloudy');
             break;
         case 'e':
+            seasonSyncManager.notifyManualWeatherChange();
             environmentManager.setWeather('rainy');
             break;
         case 'r':
+            seasonSyncManager.notifyManualWeatherChange();
             environmentManager.setWeather('snowy');
             break;
         case 't':
+            seasonSyncManager.notifyManualWeatherChange();
             environmentManager.setWeather('stormy');
             break;
         // 시간 변경
@@ -115,5 +116,5 @@ function onKeyDown(event: KeyboardEvent): void {
     }
 }
 
-// 애플리케이션 시작
-document.addEventListener('DOMContentLoaded', init);
+// 애플리케이션 시작 (App.tsx의 useEffect에서 호출)
+export { init };

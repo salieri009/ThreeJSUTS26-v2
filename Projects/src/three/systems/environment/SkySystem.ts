@@ -3,6 +3,7 @@ import { environmentManager } from '../../environment';
 
 export class SkySystem {
   init(): void {
+    environmentManager.sun();
     environmentManager.setBackground();
     environmentManager.loadClouds();
   }

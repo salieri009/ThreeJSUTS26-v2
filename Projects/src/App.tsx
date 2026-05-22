@@ -1,90 +1,47 @@
 import { useEffect, useState } from 'react';
-import { initWorld } from './three/World';
-import { spawnObject, addBlock, deleteModel, setWeather } from './three/buttonInteract';
+import { init as initThreeJS } from './three/main';
+import { spawnObject, addBlock, deleteModel } from './three/buttonInteract';
 import { environmentManager } from './three/environment';
+import { seasonSyncManager } from './three/seasonSyncUtil';
+import { on, type WeatherType, type TimeType, type SeasonType } from './three/core/eventBus';
 
 function App() {
   const [activeCategory, setActiveCategory] = useState<'ANIMALS' | 'NATURE' | 'PROPS' | 'BLDG'>('ANIMALS');
   const [time, setTime] = useState(new Date());
+  const [currentWeather, setCurrentWeather] = useState<WeatherType>('sunny');
+  const [timeMode, setTimeMode] = useState<TimeType>('day');
+  const [currentSeason, setCurrentSeason] = useState<SeasonType>('spring');
 
   useEffect(() => {
-    initWorld();
-    
+    initThreeJS();
     const timer = setInterval(() => setTime(new Date()), 1000);
-    
-    // 키보드 이벤트 핸들러
-    const handleKeyDown = (event: KeyboardEvent) => {
-      switch(event.key) {
-        // 계절 변경 (1, 2, 3, 4)
-        case '1':
-          environmentManager.setSeason('spring');
-          console.log('🌸 Spring');
-          break;
-        case '2':
-          environmentManager.setSeason('summer');
-          console.log('☀️ Summer');
-          break;
-        case '3':
-          environmentManager.setSeason('autumn');
-          console.log('🍂 Autumn');
-          break;
-        case '4':
-          environmentManager.setSeason('winter');
-          console.log('❄️ Winter');
-          break;
-        // 날씨 변경 (q, w, e, r, t)
-        case 'q':
-        case 'Q':
-          environmentManager.setWeather('sunny');
-          console.log('☀️ Sunny');
-          break;
-        case 'w':
-        case 'W':
-          environmentManager.setWeather('cloudy');
-          console.log('☁️ Cloudy');
-          break;
-        case 'e':
-        case 'E':
-          environmentManager.setWeather('rainy');
-          console.log('🌧️ Rainy');
-          break;
-        case 'r':
-        case 'R':
-          // 'r' 키가 회전에도 사용되므로 gridModels에서 처리됨
-          // 여기서는 무시
-          break;
-        case 't':
-        case 'T':
-          environmentManager.setWeather('stormy');
-          console.log('⛈️ Stormy');
-          break;
-        // 시간 변경 (n, d)
-        case 'n':
-        case 'N':
-          environmentManager.setNightMode();
-          console.log('🌙 Night');
-          break;
-        case 'd':
-        case 'D':
-          environmentManager.setDayMode();
-          console.log('🌞 Day');
-          break;
-        // 지형 확장 (Space)
-        case ' ':
-          event.preventDefault();
-          addBlock();
-          console.log('🏗️ Terrain expanded');
-          break;
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    
+    const unsubWeather = on('weather:change', setCurrentWeather);
+    const unsubTime = on('time:change', setTimeMode);
+    const unsubSeason = on('season:change', setCurrentSeason);
     return () => {
       clearInterval(timer);
-      document.removeEventListener('keydown', handleKeyDown);
+      unsubWeather();
+      unsubTime();
+      unsubSeason();
     };
   }, []);
+
+  const handleWeather = (type: WeatherType) => {
+    seasonSyncManager.notifyManualWeatherChange();
+    environmentManager.setWeather(type);
+  };
+
+  const handleSeason = (season: SeasonType) => {
+    environmentManager.setSeason(season);
+  };
+
+  const handleTimeToggle = () => {
+    if (timeMode === 'night') {
+      environmentManager.setDayMode();
+    } else {
+      environmentManager.setNightMode();
+    }
+  };
 
   const styles = {
     container: {
@@ -124,9 +81,9 @@ function App() {
         justifyContent: 'space-between',
         marginBottom: '10px'
     },
-    weatherBtn: {
-        background: 'rgba(255,255,255,0.1)',
-        border: 'none',
+    weatherBtn: (active: boolean) => ({
+        background: active ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.1)',
+        border: active ? '1px solid rgba(255,255,255,0.6)' : 'none',
         borderRadius: '10px',
         padding: '10px',
         cursor: 'pointer',
@@ -134,7 +91,7 @@ function App() {
         flex: 1,
         margin: '0 5px',
         textAlign: 'center' as const
-    },
+    }),
     sectionTitle: {
         fontSize: '12px',
         fontWeight: 'bold',
@@ -200,7 +157,25 @@ function App() {
         color: 'white',
         cursor: 'pointer',
         fontWeight: '600'
-    }
+    },
+    seasonRow: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        marginBottom: '10px',
+        gap: '5px',
+    },
+    seasonBtn: (active: boolean, color: string) => ({
+        background: active ? color : 'rgba(255,255,255,0.1)',
+        border: active ? '1px solid rgba(255,255,255,0.5)' : 'none',
+        borderRadius: '10px',
+        padding: '8px 4px',
+        cursor: 'pointer',
+        color: 'white',
+        flex: 1,
+        textAlign: 'center' as const,
+        fontSize: '18px',
+        lineHeight: 1.2,
+    }),
   };
 
   const renderGridItems = () => {
@@ -298,10 +273,16 @@ function App() {
             {/* Weather & Time Panel */}
             <div style={styles.glassPanel}>
                  <div style={styles.weatherRow}>
-                    <button style={styles.weatherBtn} onClick={() => setWeather('sunny')}>☀️</button>
-                    <button style={styles.weatherBtn} onClick={() => setWeather('cloudy')}>☁️</button>
-                    <button style={styles.weatherBtn} onClick={() => setWeather('rainy')}>🌧️</button>
-                    <button style={styles.weatherBtn} onClick={() => setWeather('night')}>🌙</button>
+                    <button style={styles.weatherBtn(currentWeather === 'sunny' && timeMode === 'day')} onClick={() => handleWeather('sunny')}>☀️</button>
+                    <button style={styles.weatherBtn(currentWeather === 'cloudy')} onClick={() => handleWeather('cloudy')}>☁️</button>
+                    <button style={styles.weatherBtn(currentWeather === 'rainy')} onClick={() => handleWeather('rainy')}>🌧️</button>
+                    <button style={styles.weatherBtn(timeMode === 'night')} onClick={handleTimeToggle}>🌙</button>
+                 </div>
+                 <div style={styles.seasonRow}>
+                    <button style={styles.seasonBtn(currentSeason === 'spring', 'rgba(255,150,180,0.45)')} onClick={() => handleSeason('spring')}>🌸</button>
+                    <button style={styles.seasonBtn(currentSeason === 'summer', 'rgba(100,200,80,0.45)')}  onClick={() => handleSeason('summer')}>🌻</button>
+                    <button style={styles.seasonBtn(currentSeason === 'autumn', 'rgba(220,120,40,0.45)')} onClick={() => handleSeason('autumn')}>🍂</button>
+                    <button style={styles.seasonBtn(currentSeason === 'winter', 'rgba(100,180,255,0.45)')} onClick={() => handleSeason('winter')}>❄️</button>
                  </div>
                 
                 <div style={styles.header}>

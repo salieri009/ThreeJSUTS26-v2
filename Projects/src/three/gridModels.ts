@@ -10,6 +10,8 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { sceneManager } from './core/sceneManager';
 import { CONFIG } from './core/CONFIG';
+import { on, type SeasonType } from './core/eventBus';
+import { getTerrainHeight } from './utils/noise';
 
 export class ModelManager {
     // ═══════════════════════════════════════════════════════════════
@@ -22,25 +24,25 @@ export class ModelManager {
     // 모델 데이터 정의 (width = x축, height = z축)
     // ═══════════════════════════════════════════════════════════════
     readonly modelData: Record<string, { width: number; height: number }> = {
-        // Animals
-        "Cow": { width: 2, height: 1 },
-        "Pig": { width: 2, height: 1 },
-        "Sheep": { width: 2, height: 1 },
+        // Animals — 1×1 each (2×2 world units)
+        "Cow":     { width: 1, height: 1 },
+        "Pig":     { width: 1, height: 1 },
+        "Sheep":   { width: 1, height: 1 },
         "Chicken": { width: 1, height: 1 },
         // Buildings
-        "Barn": { width: 5, height: 3 },
-        "Fence": { width: 2, height: 1 },
+        "Barn":     { width: 3, height: 2 },  // was 5×3 — now 6×4 world units
+        "Fence":    { width: 2, height: 1 },
         "Windmill": { width: 2, height: 2 },
         // Decorations
         "SRock": { width: 1, height: 1 },
-        "Rock": { width: 2, height: 2 },
-        "Hay": { width: 1, height: 1 },
-        "Path": { width: 1, height: 1 },
-        // Crops
-        "Carrot": { width: 3, height: 1 },
-        "Potato": { width: 3, height: 1 },
-        "Tomato": { width: 3, height: 1 },
-        "Wheat": { width: 3, height: 1 },
+        "Rock":  { width: 2, height: 2 },
+        "Hay":   { width: 1, height: 1 },
+        "Path":  { width: 1, height: 1 },
+        // Crops — 2×1 (was 3×1)
+        "Carrot": { width: 2, height: 1 },
+        "Potato": { width: 2, height: 1 },
+        "Tomato": { width: 2, height: 1 },
+        "Wheat":  { width: 2, height: 1 },
         // Nature
         "Tree": { width: 1, height: 1 },
         "Pine": { width: 1, height: 1 },
@@ -56,6 +58,11 @@ export class ModelManager {
     selectedObject: THREE.Object3D | null = null;
     isPlacing = false;
     selectedSize = { width: 1, height: 1 };
+
+    // ── Collision grid ──────────────────────────────────────────────
+    // Maps "cx,cz" grid-cell key → the object occupying that cell.
+    private occupiedCells = new Map<string, THREE.Object3D>();
+    private _canPlace = true;
 
     // 모델 참조
     tree: THREE.Object3D | null = null;
@@ -84,6 +91,24 @@ export class ModelManager {
     private mixers: THREE.AnimationMixer[] = [];
     private clock = new THREE.Clock();
 
+    constructor() {
+        on('season:change', (season: SeasonType) => this.updateGrassColors(season));
+    }
+
+    private updateGrassColors(season: SeasonType): void {
+        const grassColors: Record<SeasonType, number> = {
+            spring: CONFIG.COLORS.GRASS_SPRING,
+            summer: CONFIG.COLORS.GRASS_SUMMER,
+            autumn: CONFIG.COLORS.GRASS_AUTUMN,
+            winter: CONFIG.COLORS.GRASS_WINTER,
+        };
+        const color = grassColors[season] ?? CONFIG.COLORS.GRASS;
+        this.grasses.forEach((grass) => {
+            const mat = grass.material as THREE.MeshPhongMaterial;
+            if (mat?.color) { mat.color.setHex(color); mat.needsUpdate = true; }
+        });
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // 초기화 함수
     // ═══════════════════════════════════════════════════════════════
@@ -93,7 +118,6 @@ export class ModelManager {
      */
     loadScene(): void {
         const scene = sceneManager.scene;
-        const { getTerrainHeight } = require('./utils/noise');
 
         // 초기 3x3 그리드 생성
         const initialSize = 3;
@@ -111,7 +135,7 @@ export class ModelManager {
                     );
                     dirt.position.set(
                         -i * CONFIG.BLOCK_SIZE,
-                        h * 2 - 4,
+                        h * 2,
                         -j * CONFIG.BLOCK_SIZE
                     );
                     dirt.name = "Dirt";
@@ -356,83 +380,68 @@ export class ModelManager {
      * 작물 모델 로드
      */
     private loadCropModels(): void {
-        // Carrot
-        this.loader.load("models/grass/scene.gltf", (gltf) => {
-            let tempSoil: THREE.Mesh | null = null;
-            let tempCarrot: THREE.Mesh | null = null;
+        const soilGeo = new THREE.BoxGeometry(6, 3, 0.4);
+        const soilMat = new THREE.MeshLambertMaterial({ color: 0x5C3D1E });
 
-            gltf.scene.traverse((node) => {
-                if ((node as THREE.Mesh).isMesh) {
-                    (node as THREE.Mesh).castShadow = true;
-                    if (node.name === "Soil003_Dirt_0") tempSoil = (node as THREE.Mesh).clone();
-                    else if (node.name === "Carrot_F3_Carrot_0") tempCarrot = (node as THREE.Mesh).clone();
-                }
-            });
+        const makeSoil = (name: string): THREE.Mesh => {
+            const mesh = new THREE.Mesh(soilGeo, soilMat.clone());
+            mesh.name = name;
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            mesh.rotation.set(-Math.PI / 2, 0, 0);
+            mesh.position.set(0, CONFIG.HEIGHTS.GRASS_TOP, 0);
+            return mesh;
+        };
 
-            if (tempSoil && tempCarrot) {
-                this.soil = tempSoil;
-                this.setupCropSoil(this.soil, tempCarrot, "Carrot");
-            }
-        });
+        // Carrot — orange cones pointing up
+        this.soil = makeSoil('Carrot');
+        const carrotMat = new THREE.MeshLambertMaterial({ color: 0xFF7020 });
+        const leafMat   = new THREE.MeshLambertMaterial({ color: 0x2E8B2E });
+        for (const x of [-2, 0, 2]) {
+            const body = new THREE.Mesh(new THREE.ConeGeometry(0.22, 1.1, 7), carrotMat);
+            body.rotation.set(Math.PI, 0, 0);
+            body.position.set(x, 0.55, 0);
+            const top = new THREE.Mesh(new THREE.SphereGeometry(0.12, 5, 4), leafMat);
+            top.position.set(x, 0.1, 0);
+            this.soil.add(body, top);
+        }
 
-        // Potato
-        this.loader.load("models/grass/scene.gltf", (gltf) => {
-            let tempSoil: THREE.Mesh | null = null;
-            let tempPotato: THREE.Mesh | null = null;
+        // Potato — beige lumps with sprouts
+        this.pSoil = makeSoil('Potato');
+        const potatoMat = new THREE.MeshLambertMaterial({ color: 0xC8A060 });
+        const sproutMat = new THREE.MeshLambertMaterial({ color: 0x5AAF5A });
+        for (const x of [-2, 0, 2]) {
+            const lump = new THREE.Mesh(new THREE.SphereGeometry(0.28, 7, 5), potatoMat);
+            lump.scale.set(1, 0.75, 1);
+            lump.position.set(x, 0.22, 0);
+            const sprout = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.4, 5), sproutMat);
+            sprout.position.set(x, 0.6, 0);
+            this.pSoil.add(lump, sprout);
+        }
 
-            gltf.scene.traverse((node) => {
-                if ((node as THREE.Mesh).isMesh) {
-                    (node as THREE.Mesh).castShadow = true;
-                    if (node.name === "Soil003_Dirt_0") tempSoil = (node as THREE.Mesh).clone();
-                    else if (node.name === "Potatoe_F3_Potatoe_0") tempPotato = (node as THREE.Mesh).clone();
-                }
-            });
+        // Tomato — red spheres on green stakes
+        this.tSoil = makeSoil('Tomato');
+        const tomatoMat = new THREE.MeshLambertMaterial({ color: 0xDD2020 });
+        const stakeMat  = new THREE.MeshLambertMaterial({ color: 0x3A6B2F });
+        for (const x of [-2, 0, 2]) {
+            const stake = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 1.3, 5), stakeMat);
+            stake.position.set(x, 0.65, 0);
+            const fruit = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 6), tomatoMat);
+            fruit.position.set(x, 1.35, 0);
+            this.tSoil.add(stake, fruit);
+        }
 
-            if (tempSoil && tempPotato) {
-                this.pSoil = tempSoil;
-                this.setupCropSoil(this.pSoil, tempPotato, "Potato");
-            }
-        });
-
-        // Tomato
-        this.loader.load("models/grass/scene.gltf", (gltf) => {
-            let tempSoil: THREE.Mesh | null = null;
-            let tempTomato: THREE.Mesh | null = null;
-
-            gltf.scene.traverse((node) => {
-                if ((node as THREE.Mesh).isMesh) {
-                    (node as THREE.Mesh).castShadow = true;
-                    if (node.name === "Soil003_Dirt_0") tempSoil = (node as THREE.Mesh).clone();
-                    else if (node.name === "Tomatoe_F3_Tomatoe_0") tempTomato = (node as THREE.Mesh).clone();
-                }
-            });
-
-            if (tempSoil && tempTomato) {
-                this.tSoil = tempSoil;
-                this.setupCropSoil(this.tSoil, tempTomato, "Tomato");
-            }
-        });
-
-        // Wheat
-        this.loader.load("models/grass/scene.gltf", (gltf) => {
-            let tempSoil: THREE.Mesh | null = null;
-            let wheat1: THREE.Mesh | null = null;
-            let wheat2: THREE.Mesh | null = null;
-
-            gltf.scene.traverse((node) => {
-                if ((node as THREE.Mesh).isMesh) {
-                    (node as THREE.Mesh).castShadow = true;
-                    if (node.name === "Soil003_Dirt_0") tempSoil = (node as THREE.Mesh).clone();
-                    else if (node.name === "Wheat_F3_Wheat_0") wheat1 = (node as THREE.Mesh).clone();
-                    else if (node.name === "Wheat_F3_Wheat_0_1") wheat2 = (node as THREE.Mesh).clone();
-                }
-            });
-
-            if (tempSoil && wheat1 && wheat2) {
-                this.wSoil = tempSoil;
-                this.setupWheatSoil(this.wSoil, wheat1, wheat2);
-            }
-        });
+        // Wheat — golden stalks with grain heads
+        this.wSoil = makeSoil('Wheat');
+        const stalkMat = new THREE.MeshLambertMaterial({ color: 0xC8963C });
+        const headMat  = new THREE.MeshLambertMaterial({ color: 0xE8B840 });
+        for (const x of [-2.2, -1.1, 0, 1.1, 2.2]) {
+            const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.07, 1.5, 5), stalkMat);
+            stalk.position.set(x, 0.75, 0);
+            const head = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.55, 5), headMat);
+            head.position.set(x, 1.68, 0);
+            this.wSoil.add(stalk, head);
+        }
     }
 
     private setupCropSoil(soilMesh: THREE.Mesh, cropMesh: THREE.Mesh, name: string): void {
@@ -544,6 +553,15 @@ export class ModelManager {
             const offsetX = this.selectedSize.width % 2 === 0 ? -1 : 0;
             const offsetZ = this.selectedSize.height % 2 === 0 ? -1 : 0;
             this.highlight.position.set(gridX + offsetX, CONFIG.HEIGHTS.HIGHLIGHT, gridZ + offsetZ);
+
+            // Collision check — colour highlight red when blocked
+            const fp = this.getFootprint(gridX, gridZ, this.selectedSize.width, this.selectedSize.height);
+            const blocked = fp.some(k => {
+                const o = this.occupiedCells.get(k);
+                return o !== undefined && o !== this.selectedObject;
+            });
+            this._canPlace = !blocked;
+            this.highlight.material.color.set(blocked ? 0xFF3333 : CONFIG.COLORS.HIGHLIGHT_PLACING);
         }
     };
 
@@ -604,20 +622,39 @@ export class ModelManager {
                 const gridX = Math.round(point.x / gridSize) * gridSize;
                 const gridZ = Math.round(point.z / gridSize) * gridSize;
 
-                let y = CONFIG.HEIGHTS.GRASS_TOP;
-                if (this.selectedObject.name === "Fence" || this.selectedObject.name === "Barn") {
-                    y = CONFIG.HEIGHTS.FENCE;
+                // Block placement if any cell in the footprint is already occupied.
+                const fp = this.getFootprint(gridX, gridZ, this.selectedSize.width, this.selectedSize.height);
+                const blocked = fp.some(k => {
+                    const o = this.occupiedCells.get(k);
+                    return o !== undefined && o !== this.selectedObject;
+                });
+                if (blocked) return;
+
+                // Use raycaster hit Y as the actual surface — works on both flat and raised tiles.
+                const surfaceY = point.y;
+                let y: number;
+                if (this.selectedObject.name === "Barn") {
+                    y = surfaceY + (CONFIG.HEIGHTS.BARN  - CONFIG.HEIGHTS.GRASS_TOP);  // +2.5
+                } else if (this.selectedObject.name === "Fence") {
+                    y = surfaceY + (CONFIG.HEIGHTS.FENCE - CONFIG.HEIGHTS.GRASS_TOP);  // +1.0
                 } else if (this.selectedObject.name === "Path") {
-                    y = CONFIG.HEIGHTS.PATH;
+                    y = surfaceY + (CONFIG.HEIGHTS.PATH  - CONFIG.HEIGHTS.GRASS_TOP);  // -0.9
+                } else {
+                    y = surfaceY;
                 }
 
-                const offsetX = this.selectedSize.width === 2 ? -0.5 : 0;
-                this.selectedObject.position.set(gridX + offsetX, y, gridZ);
-                this.selectedObject.visible = true;
+                const offsetX = this.selectedSize.width % 2 === 0 ? -0.5 : 0;
+                const placed = this.selectedObject;
+                placed.position.set(gridX + offsetX, y, gridZ);
+                placed.visible = true;
+
+                // Register all cells as occupied by this object.
+                fp.forEach(k => this.occupiedCells.set(k, placed));
 
                 this.highlight.material.color.set(CONFIG.COLORS.HIGHLIGHT);
                 this.isPlacing = false;
                 this.selectedObject = null;
+                this._canPlace = true;
             }
         }
     };
@@ -641,6 +678,35 @@ export class ModelManager {
         model.add(box);
 
         return box;
+    }
+
+    // ── Collision helpers ────────────────────────────────────────────
+
+    /**
+     * Returns the list of cell keys covered by an object placed at (gridX, gridZ)
+     * with the given footprint (in grid-cell units).
+     * Cell key format: "cx,cz" where cx = worldX / GRID_SIZE (snapped).
+     */
+    private getFootprint(gridX: number, gridZ: number, width: number, height: number): string[] {
+        const gs = CONFIG.GRID_SIZE;
+        const cx = Math.round(gridX / gs);
+        const cz = Math.round(gridZ / gs);
+        const hw = Math.floor(width / 2);
+        const hh = Math.floor(height / 2);
+        const cells: string[] = [];
+        for (let dx = -hw; dx < width - hw; dx++) {
+            for (let dz = -hh; dz < height - hh; dz++) {
+                cells.push(`${cx + dx},${cz + dz}`);
+            }
+        }
+        return cells;
+    }
+
+    /** Called by InteractionManager when an object is deleted. */
+    freeObjectCells(obj: THREE.Object3D): void {
+        for (const [key, o] of this.occupiedCells) {
+            if (o === obj) this.occupiedCells.delete(key);
+        }
     }
 
     setGrid(newGrid: THREE.GridHelper): void {

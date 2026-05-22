@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import { sceneManager } from './core/sceneManager';
 import { CONFIG } from './core/CONFIG';
 import { modelManager } from './gridModels';
-import { environmentManager } from './environment';
+import { getTerrainHeight } from './utils/noise';
 
 export class InteractionManager {
     // ═══════════════════════════════════════════════════════════════
@@ -34,6 +34,15 @@ export class InteractionManager {
 
     constructor() {
         this.initSpawnConfig();
+        // Pre-populate with the initial 3×3 terrain created by loadScene()
+        // Must match gridModels.ts loadScene() initialSize=3
+        const initialSize = 3;
+        for (let i = 0; i < initialSize; i++) {
+            for (let j = 0; j < initialSize; j++) {
+                this.existingBlocks.add(`${i},${j}`);
+            }
+        }
+        this.level = initialSize;
     }
 
     private initSpawnConfig(): void {
@@ -64,7 +73,6 @@ export class InteractionManager {
      */
     addBlock(): void {
         const scene = sceneManager.scene;
-        const { getTerrainHeight } = require('./utils/noise');
         
         // 기존 그리드 제거
         if (modelManager.grid) scene.remove(modelManager.grid);
@@ -96,8 +104,8 @@ export class InteractionManager {
                         new THREE.MeshPhongMaterial({ color: CONFIG.COLORS.DIRT })
                     );
                     dirt.position.set(
-                        -i * CONFIG.BLOCK_SIZE, 
-                        h * 2 - 4, // 블록 높이
+                        -i * CONFIG.BLOCK_SIZE,
+                        h * 2,
                         -j * CONFIG.BLOCK_SIZE
                     );
                     dirt.name = "Dirt";
@@ -166,6 +174,7 @@ export class InteractionManager {
 
             // 보호 대상이 아니면 삭제
             if (!this.PROTECTED_OBJECTS.has(root.name)) {
+                modelManager.freeObjectCells(root);
                 this.disposeObject(root);
                 scene.remove(root);
                 this.isRemoving = false;
@@ -245,35 +254,6 @@ export class InteractionManager {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // 날씨 제어 (레거시 호환)
-    // ═══════════════════════════════════════════════════════════════
-
-    /**
-     * 날씨 설정
-     * @deprecated environmentManager.setWeather() 사용 권장
-     */
-    setWeather(type: string): void {
-        switch (type) {
-            case 'sunny':
-                environmentManager.weather.cloudy = false;
-                environmentManager.weather.night = false;
-                break;
-            case 'cloudy':
-                environmentManager.weather.cloudy = true;
-                environmentManager.weather.night = false;
-                break;
-            case 'rainy':
-                environmentManager.weather.cloudy = true;
-                environmentManager.weather.night = false;
-                break;
-            case 'night':
-                environmentManager.weather.cloudy = false;
-                environmentManager.weather.night = true;
-                break;
-        }
-        environmentManager.updateSky();
-    }
-
     // ═══════════════════════════════════════════════════════════════
     // Cleanup & Dispose
     // ═══════════════════════════════════════════════════════════════
@@ -302,5 +282,4 @@ export const interactionManager = new InteractionManager();
 export const addBlock = () => interactionManager.addBlock();
 export const deleteModel = () => interactionManager.deleteModel();
 export const spawnObject = (type: string) => interactionManager.spawnObject(type);
-export const setWeather = (type: string) => interactionManager.setWeather(type);
 export const dispose = () => interactionManager.dispose();
