@@ -1,6 +1,6 @@
 {
-  "name": "projects",
-  "version": "1.0.0",
+  "name": "animal-farm-simulator",
+  "version": "1.1.0",
   "description": "Three.js 기반 3D 농장·생태 시뮬레이터. 실시간 계절/날씨/바람/일야 변화와 상호작용 UI를 제공합니다.",
   "main": "main.js",
   "directories": {

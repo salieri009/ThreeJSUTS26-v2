@@ -132,12 +132,8 @@ function App() {
         padding: '10px',
         cursor: 'pointer',
         color: '#333',
-        height: '80px',
+        height: '60px',
         justifyContent: 'center'
-    },
-    itemIcon: {
-        fontSize: '24px',
-        marginBottom: '5px'
     },
     itemLabel: {
         fontSize: '10px',
@@ -173,7 +169,8 @@ function App() {
         color: 'white',
         flex: 1,
         textAlign: 'center' as const,
-        fontSize: '18px',
+        fontSize: '11px',
+        fontWeight: 'bold' as const,
         lineHeight: 1.2,
     }),
   };
@@ -184,19 +181,15 @@ function App() {
             return (
                 <>
                     <button style={styles.itemBtn} onClick={() => spawnObject('Cow')}>
-                        <span style={styles.itemIcon}>🐮</span>
                         <span style={styles.itemLabel}>Cow</span>
                     </button>
                     <button style={styles.itemBtn} onClick={() => spawnObject('Pig')}>
-                        <span style={styles.itemIcon}>🐷</span>
                         <span style={styles.itemLabel}>Pig</span>
                     </button>
                     <button style={styles.itemBtn} onClick={() => spawnObject('Sheep')}>
-                        <span style={styles.itemIcon}>🐑</span>
                         <span style={styles.itemLabel}>Sheep</span>
                     </button>
                     <button style={styles.itemBtn} onClick={() => spawnObject('Chicken')}>
-                        <span style={styles.itemIcon}>🐔</span>
                         <span style={styles.itemLabel}>Hen</span>
                     </button>
                 </>
@@ -205,19 +198,15 @@ function App() {
             return (
                 <>
                     <button style={styles.itemBtn} onClick={() => spawnObject('Tree')}>
-                        <span style={styles.itemIcon}>🌳</span>
                         <span style={styles.itemLabel}>Tree</span>
                     </button>
-                     <button style={styles.itemBtn} onClick={() => spawnObject('Pine')}>
-                        <span style={styles.itemIcon}>🌲</span>
+                    <button style={styles.itemBtn} onClick={() => spawnObject('Pine')}>
                         <span style={styles.itemLabel}>Pine</span>
                     </button>
                     <button style={styles.itemBtn} onClick={() => spawnObject('Rock')}>
-                        <span style={styles.itemIcon}>🪨</span>
                         <span style={styles.itemLabel}>Rock</span>
                     </button>
-                     <button style={styles.itemBtn} onClick={() => spawnObject('SRock')}>
-                        <span style={styles.itemIcon}>🌑</span>
+                    <button style={styles.itemBtn} onClick={() => spawnObject('SRock')}>
                         <span style={styles.itemLabel}>Pebble</span>
                     </button>
                 </>
@@ -226,19 +215,15 @@ function App() {
              return (
                 <>
                     <button style={styles.itemBtn} onClick={() => spawnObject('Hay')}>
-                        <span style={styles.itemIcon}>🌾</span>
                         <span style={styles.itemLabel}>Hay</span>
                     </button>
                     <button style={styles.itemBtn} onClick={() => spawnObject('Carrot')}>
-                        <span style={styles.itemIcon}>🥕</span>
                         <span style={styles.itemLabel}>Carrot</span>
                     </button>
                     <button style={styles.itemBtn} onClick={() => spawnObject('Potato')}>
-                        <span style={styles.itemIcon}>🥔</span>
                         <span style={styles.itemLabel}>Potato</span>
                     </button>
-                     <button style={styles.itemBtn} onClick={() => spawnObject('Path')}>
-                        <span style={styles.itemIcon}>🛤️</span>
+                    <button style={styles.itemBtn} onClick={() => spawnObject('Path')}>
                         <span style={styles.itemLabel}>Path</span>
                     </button>
                 </>
@@ -247,15 +232,12 @@ function App() {
              return (
                 <>
                     <button style={styles.itemBtn} onClick={() => spawnObject('Fence')}>
-                        <span style={styles.itemIcon}>🚧</span>
                         <span style={styles.itemLabel}>Fence</span>
                     </button>
                     <button style={styles.itemBtn} onClick={() => spawnObject('Barn')}>
-                        <span style={styles.itemIcon}>🏠</span>
                         <span style={styles.itemLabel}>Barn</span>
                     </button>
                     <button style={styles.itemBtn} onClick={() => spawnObject('Windmill')}>
-                        <span style={styles.itemIcon}>🌬️</span>
                         <span style={styles.itemLabel}>Mill</span>
                     </button>
                 </>
@@ -273,16 +255,16 @@ function App() {
             {/* Weather & Time Panel */}
             <div style={styles.glassPanel}>
                  <div style={styles.weatherRow}>
-                    <button style={styles.weatherBtn(currentWeather === 'sunny' && timeMode === 'day')} onClick={() => handleWeather('sunny')}>☀️</button>
-                    <button style={styles.weatherBtn(currentWeather === 'cloudy')} onClick={() => handleWeather('cloudy')}>☁️</button>
-                    <button style={styles.weatherBtn(currentWeather === 'rainy')} onClick={() => handleWeather('rainy')}>🌧️</button>
-                    <button style={styles.weatherBtn(timeMode === 'night')} onClick={handleTimeToggle}>🌙</button>
+                    <button style={styles.weatherBtn(currentWeather === 'sunny' && timeMode === 'day')} onClick={() => handleWeather('sunny')}>Sun</button>
+                    <button style={styles.weatherBtn(currentWeather === 'cloudy')} onClick={() => handleWeather('cloudy')}>Cloud</button>
+                    <button style={styles.weatherBtn(currentWeather === 'rainy')} onClick={() => handleWeather('rainy')}>Rain</button>
+                    <button style={styles.weatherBtn(timeMode === 'night')} onClick={handleTimeToggle}>{timeMode === 'night' ? 'Day' : 'Night'}</button>
                  </div>
                  <div style={styles.seasonRow}>
-                    <button style={styles.seasonBtn(currentSeason === 'spring', 'rgba(255,150,180,0.45)')} onClick={() => handleSeason('spring')}>🌸</button>
-                    <button style={styles.seasonBtn(currentSeason === 'summer', 'rgba(100,200,80,0.45)')}  onClick={() => handleSeason('summer')}>🌻</button>
-                    <button style={styles.seasonBtn(currentSeason === 'autumn', 'rgba(220,120,40,0.45)')} onClick={() => handleSeason('autumn')}>🍂</button>
-                    <button style={styles.seasonBtn(currentSeason === 'winter', 'rgba(100,180,255,0.45)')} onClick={() => handleSeason('winter')}>❄️</button>
+                    <button style={styles.seasonBtn(currentSeason === 'spring', 'rgba(255,150,180,0.45)')} onClick={() => handleSeason('spring')}>Spring</button>
+                    <button style={styles.seasonBtn(currentSeason === 'summer', 'rgba(100,200,80,0.45)')}  onClick={() => handleSeason('summer')}>Summer</button>
+                    <button style={styles.seasonBtn(currentSeason === 'autumn', 'rgba(220,120,40,0.45)')} onClick={() => handleSeason('autumn')}>Autumn</button>
+                    <button style={styles.seasonBtn(currentSeason === 'winter', 'rgba(100,180,255,0.45)')} onClick={() => handleSeason('winter')}>Winter</button>
                  </div>
                 
                 <div style={styles.header}>

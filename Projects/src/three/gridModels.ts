@@ -186,13 +186,13 @@ export class ModelManager {
         // Tree
         this.loader.load("models/tree/scene.gltf", (gltf) => {
             this.tree = gltf.scene;
-            this.tree.scale.set(0.01, 0.01, 0.01);
+            this.tree.scale.set(0.005, 0.005, 0.005);
             this.tree.position.set(-3, CONFIG.HEIGHTS.GRASS_TOP, 0);
             this.tree.traverse((node) => {
                 if ((node as THREE.Mesh).isMesh) (node as THREE.Mesh).castShadow = true;
             });
             this.tree.name = 'Tree';
-            this.createBoundingBox(this.tree, 200, 2000, 200);
+            this.createBoundingBox(this.tree, 400, 2000, 400);
         });
 
         // Pine

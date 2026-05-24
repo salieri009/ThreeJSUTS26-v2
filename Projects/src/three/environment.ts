@@ -62,8 +62,8 @@ uniform float time;
 uniform float randSeed;
 void main(){
   vec3 pos=position;
-  // Plane is 1000 wide x 450 tall, centered at origin
-  float normalY=clamp((pos.y+225.0)/450.0,0.0,1.0);
+  // Plane is 400 wide x 200 tall, centered at origin
+  float normalY=clamp((pos.y+100.0)/200.0,0.0,1.0);
   // Bell-curve height envelope — peak in lower-middle, tapers at edges
   float hEnv=smoothstep(0.0,0.22,normalY)*(1.0-smoothstep(0.5,1.0,normalY));
   hEnv=hEnv*hEnv*1.6;
@@ -83,7 +83,7 @@ void main(){
   // Fold/drape — adds vertical streaks
   pos.x+=sin(totalN*4.0+t*1.1)*auroraParams.z*0.055*hEnv;
   // Subtle Y waviness for organic look
-  pos.y+=sin(pos.x*0.004+t*0.7)*10.0*hEnv;
+  pos.y+=sin(pos.x*0.007+t*0.7)*5.0*hEnv;
   vWorldPos=(modelMatrix*vec4(pos,1.0)).xyz;
   vNormalY=normalY;
   float nMag=abs(n1)*0.5+abs(n2)*0.3+abs(n3)*0.15+abs(n4)*0.05;
@@ -107,7 +107,7 @@ void main(){
   col=mix(col,color4,smoothstep(0.7,1.0,vNormalY));
   float core=pow(vIntensity,2.0)*1.8;
   col+=vec3(0.3,0.6,0.4)*core;
-  float xFade=1.0-smoothstep(0.55,1.0,abs(vWorldPos.x)/500.0);
+  float xFade=1.0-smoothstep(0.55,1.0,abs(vWorldPos.x)/200.0);
   float hFade=smoothstep(0.0,0.1,vNormalY)*(1.0-smoothstep(0.85,1.0,vNormalY));
   float alpha=vIntensity*hFade*xFade*1.4;
   alpha=clamp(alpha,0.0,0.85);
@@ -385,7 +385,7 @@ export class EnvironmentManager {
 
     updateMoon(dt: number): void {
         if (!this.moon || !this.moonOrbitNormal) return;
-        this.moonOrbitAngle += dt * 5;
+        this.moonOrbitAngle += dt * 0.3;
         // Rodrigues rotation
         const v = this.moonOrbitVec.clone();
         const k = this.moonOrbitNormal;
@@ -395,7 +395,7 @@ export class EnvironmentManager {
             .add(k.clone().cross(v).multiplyScalar(sin))
             .add(k.clone().multiplyScalar(k.dot(v) * (1 - cos)));
         this.moon.position.copy(this.moonCenter.clone().add(rotated));
-        this.moon.rotation.y += dt * 10;
+        this.moon.rotation.y += dt * 2;
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -430,7 +430,7 @@ export class EnvironmentManager {
     }
 
     private createAuroraLayer(s: any, idx: number): THREE.Group {
-        const geometry = new THREE.PlaneGeometry(1000, 450, 256, 128);
+        const geometry = new THREE.PlaneGeometry(400, 200, 128, 64);
         const pivot = new THREE.Group();
         pivot.rotation.set(
             THREE.MathUtils.randFloatSpread(Math.PI / 8),
@@ -438,9 +438,9 @@ export class EnvironmentManager {
             THREE.MathUtils.randFloatSpread(Math.PI / 8),
         );
         pivot.position.set(
-            THREE.MathUtils.randFloatSpread(200),
-            THREE.MathUtils.randFloat(120, 160),
-            THREE.MathUtils.randFloatSpread(200),
+            THREE.MathUtils.randFloatSpread(80),
+            THREE.MathUtils.randFloat(60, 90),
+            THREE.MathUtils.randFloatSpread(80),
         );
         const material = new THREE.ShaderMaterial({
             uniforms: {
@@ -475,7 +475,7 @@ export class EnvironmentManager {
             mat.uniforms.auroraParams.value.set(
                 0.1 + Math.sin(t * 0.1) * 0.1,
                 0.28 + i * 0.04,
-                45 + Math.sin(t * 0.15 + i * 0.8) * 20,
+                20 + Math.sin(t * 0.15 + i * 0.8) * 10,
             );
         });
     }
